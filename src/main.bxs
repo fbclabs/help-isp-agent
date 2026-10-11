@@ -33,8 +33,15 @@ while ( true ) {
 		continue;
 	}
 
+	if ( fabrica.estaCerrada() ) {
+		println( "Fibra> Esta conversación fue cerrada por uso indebido. Escribe /nuevo si tienes un problema real con tu servicio." )
+		continue;
+	}
+
 	try {
+		fabrica.mensajeCliente( entrada )
 		respuesta = agente.run( entrada )
+		respuesta = fabrica.procesarRespuesta( respuesta )
 		println( "" )
 		println( "Fibra> " & respuesta )
 	} catch ( any e ) {

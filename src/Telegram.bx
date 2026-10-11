@@ -1,0 +1,53 @@
+/**
+ * CAPA 2 - Cliente mínimo de la API de Telegram (long polling, sin webhook).
+ * Documentación: https://core.telegram.org/bots/api
+ */
+class {
+
+	function init( required string token ) {
+		variables.base = "https://api.telegram.org/bot" & token & "/"
+		return this
+	}
+
+	/** Llama un método de la API con un cuerpo JSON y devuelve la respuesta deserializada */
+	struct function llamar( required string metodo, struct datos = {}, numeric timeout = 40 ) {
+		var cuerpo = jsonSerialize( datos )
+		bx:http method="POST" url="#variables.base##metodo#" timeout="#timeout#" charset="utf-8" result="local.resp" {
+			bx:httpparam type="header" name="Content-Type" value="application/json; charset=utf-8";
+			bx:httpparam type="body" value="#cuerpo#";
+		}
+		var contenido = local.resp.fileContent ?: ""
+		if ( isJSON( contenido ) ) {
+			return jsonDeserialize( contenido )
+		}
+		return { ok: false, description: "Respuesta no JSON: " & left( contenido, 200 ) }
+	}
+
+	/** Espera hasta 25 s por mensajes nuevos (long polling) */
+	struct function getUpdates( required numeric offset ) {
+		return llamar( "getUpdates", { offset: offset, timeout: 25, allowed_updates: [ "message" ] }, 35 )
+	}
+
+	/** Envía texto (lo parte en bloques de 3500 caracteres) */
+	void function enviar( required any chatId, required string texto ) {
+		var limpio = replace( texto, "**", "", "all" )
+		var i      = 1
+		while ( i <= len( limpio ) ) {
+			llamar( "sendMessage", { chat_id: idTexto( chatId ), text: mid( limpio, i, 3500 ) } )
+			i += 3500
+		}
+	}
+
+	/** Muestra "escribiendo..." en el chat */
+	void function escribiendo( required any chatId ) {
+		try {
+			llamar( "sendChatAction", { chat_id: idTexto( chatId ), action: "typing" }, 10 )
+		} catch ( any e ) {
+		}
+	}
+
+	/** Los chat_id son enteros grandes: se envían como texto para no perder precisión */
+	string function idTexto( required any chatId ) {
+		return isNumeric( chatId ) ? numberFormat( chatId, "0" ) : toString( chatId )
+	}
+}

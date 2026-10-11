@@ -5,9 +5,15 @@
  */
 class {
 
-	function init( required any datos, string canal = "cli" ) {
+	function init( required any datos, string canal = "cli", any notificar ) {
+		// Función opcional para avisar al cliente (ej. Telegram) que una acción espera aprobación
+		variables.notificar = isNull( arguments.notificar ) ? "" : arguments.notificar
 		// Tools que requieren aprobación humana (aplicado en código, no por la IA)
-		variables.TOOLS_APROBACION = [ "reiniciar_ont", "agendar_visita", "cerrar_ticket" ]
+		variables.TOOLS_APROBACION = [ "agendar_visita" ]
+		variables.ultimoMensajeCliente = ""
+		variables.advertencias         = 0
+		variables.advertenciasAntes    = 0
+		variables.conversacionCerrada  = false
 		variables.datos         = datos
 		variables.canal         = canal
 		variables.clienteActual = ""
@@ -76,6 +82,10 @@ class {
 				( clienteId ) => yo.enlaceCorporativo( arguments.clienteId ?: "" ) )
 				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
 
+			aiTool( "advertir_uso_indebido", "Llamar cuando el mensaje del cliente NO tiene relación con su servicio de internet (bromas, historias absurdas, insultos, temas ajenos). Devuelve el texto exacto que debes responder.",
+				( motivo ) => yo.advertirUsoIndebido( arguments.motivo ?: "" ) )
+				.describeArg( "motivo", "Por qué el mensaje está fuera de tema, en pocas palabras" ),
+
 			aiTool( "buscar_kb", "Busca en la base de conocimiento de fallas: indicadores, pruebas caseras, resolución, área y si requiere visita.",
 				( consulta ) => yo.buscarKb( arguments.consulta ?: "" ) )
 				.describeArg( "consulta", "Palabras clave del síntoma o diagnóstico, o el id de falla (ej. R03)" ),
@@ -107,12 +117,12 @@ class {
 				.describeArg( "resumen", "Resumen de 3 líneas: síntoma, evidencia, acciones realizadas" )
 				.describeArg( "siguientePaso", "Qué debe hacer el humano" ),
 
-			aiTool( "cerrar_ticket", "Cierra un ticket resuelto. REQUIERE APROBACIÓN HUMANA.",
+			aiTool( "cerrar_ticket", "Cierra un ticket cuando el CLIENTE confirma que su servicio funciona.",
 				( ticketId, notaCierre ) => yo.cerrarTicket( arguments.ticketId ?: "", arguments.notaCierre ?: "" ) )
 				.describeArg( "ticketId", "Id del ticket" )
 				.describeArg( "notaCierre", "Cómo se resolvió" ),
 
-			aiTool( "reiniciar_ont", "Reinicia la ONT en remoto. REQUIERE APROBACIÓN HUMANA. Solo si la ONT está online con Rx normal y la WAN caída.",
+			aiTool( "reiniciar_ont", "Reinicia la ONT en remoto. Requiere que el CLIENTE lo autorice respondiendo SÍ. Solo si la ONT está online con Rx normal y la WAN caída.",
 				( clienteId, motivo ) => yo.reiniciarOnt( arguments.clienteId ?: "", arguments.motivo ?: "" ) )
 				.describeArg( "clienteId", "clienteId del cliente identificado" )
 				.describeArg( "motivo", "Por qué se reinicia" ),
@@ -236,6 +246,8 @@ class {
 
 	function crearTicket( clienteId = "", fallaId = "", sintoma = "", diagnostico = "", area = "", prioridad = "P3", requiereVisita = "no" ) {
 		traza( "crear_ticket", "#clienteId#, #fallaId#, #area#, #prioridad#" )
+		var abuso = bloqueoPorAbuso()
+		if ( !isSimpleValue( abuso ) ) return abuso
 		var err = validarCliente( clienteId )
 		if ( !isSimpleValue( err ) ) return err
 
@@ -319,6 +331,8 @@ class {
 
 	function escalarTicket( ticketId = "", area = "", resumen = "", siguientePaso = "" ) {
 		traza( "escalar_ticket", "#ticketId#, #area#" )
+		var abuso = bloqueoPorAbuso()
+		if ( !isSimpleValue( abuso ) ) return abuso
 		var t = ticketDelCliente( ticketId )
 		if ( t.keyExists( "error" ) ) return t
 		t.estado        = "escalado"
@@ -359,17 +373,18 @@ class {
 		if ( !isSimpleValue( err ) ) return err
 		var tk = variables.datos.ticketAbierto( variables.clienteActual )
 		var tkId = tk.isEmpty() ? "" : tk.ticketId
-		if ( aprobar( "reiniciar_ont", "#variables.clienteActual# - #motivo#" ) == "reject" ) {
-			registrarAccion( tkId, "reiniciar_ont", "reject", "No ejecutado" )
-			return { ejecutado: false, mensaje: "El operador humano rechazó el reinicio. No se ejecutó." }
+		if ( !clienteAutorizo() ) {
+			return { ejecutado: false, mensaje: "El cliente aún no autoriza. Explícale que el reinicio corta el servicio 2-3 minutos y pídele que responda SÍ para autorizarlo. No reinicies sin su autorización." }
 		}
 		var o = variables.datos.reiniciarOnt( variables.clienteActual )
-		registrarAccion( tkId, "reiniciar_ont", "approve", "ONT reiniciada. WAN: #o.wan.estado#" )
-		return { ejecutado: true, decisionHumana: "approve", ontDespues: o }
+		registrarAccion( tkId, "reiniciar_ont", "autorizado_por_cliente", "ONT reiniciada. WAN: #o.wan.estado#. Cliente: #variables.ultimoMensajeCliente#" )
+		return { ejecutado: true, autorizadoPor: "cliente", ontDespues: o }
 	}
 
 	function agendarVisita( motivo = "", prioridad = "P3" ) {
 		traza( "agendar_visita", prioridad )
+		var abuso = bloqueoPorAbuso()
+		if ( !isSimpleValue( abuso ) ) return abuso
 		if ( !len( variables.clienteActual ) ) return { error: "Primero identifica y verifica al cliente." };
 		var t = variables.datos.ticketAbierto( variables.clienteActual )
 		if ( t.isEmpty() ) return { error: "El cliente no tiene ticket abierto. Llama primero crear_ticket y luego agendar_visita." };
@@ -396,15 +411,14 @@ class {
 		traza( "cerrar_ticket", ticketId )
 		var t = ticketDelCliente( ticketId )
 		if ( t.keyExists( "error" ) ) return t
-		if ( aprobar( "cerrar_ticket", "#t.ticketId# - #notaCierre#" ) == "reject" ) {
-			registrarAccion( t.ticketId, "cerrar_ticket", "reject", "Sigue abierto" )
-			return { ejecutado: false, mensaje: "El operador humano rechazó el cierre. El ticket sigue abierto." }
+		if ( !clienteConfirmoSolucion() ) {
+			return { ejecutado: false, mensaje: "El cliente no ha confirmado que el servicio funciona. Pregúntale si ya navega con normalidad antes de cerrar." }
 		}
 		t = variables.datos.ticket( t.ticketId )
 		t.estado     = "cerrado"
 		t.cerrado    = variables.datos.ahora()
 		t.notaCierre = notaCierre
-		t.accionesEjecutadas.append( { accion: "cerrar_ticket", decisionHumana: "approve", resultado: "Cerrado", fecha: variables.datos.ahora() } )
+		t.accionesEjecutadas.append( { accion: "cerrar_ticket", decisionHumana: "confirmado_por_cliente", resultado: "Cerrado. Cliente: #variables.ultimoMensajeCliente#", fecha: variables.datos.ahora() } )
 		t.historial.append( { fecha: variables.datos.ahora(), autor: "agente", nota: "Cerrado: " & notaCierre } )
 		t.actualizado = variables.datos.ahora()
 		variables.datos.guardarTicket( t )
@@ -424,17 +438,80 @@ class {
 			} else if ( context.keyExists( "toolCall" ) ) {
 				args = jsonDeserialize( context.toolCall.function.arguments ?: "{}" )
 			}
+			var requiere = true
 			if ( nombre == "agendar_visita" ) {
-				return !variables.datos.ticketAbierto( variables.clienteActual ).isEmpty()
+				requiere = !variables.datos.ticketAbierto( variables.clienteActual ).isEmpty()
 			}
 			if ( nombre == "cerrar_ticket" ) {
 				var t = variables.datos.ticket( args.ticketId ?: "" )
-				return !t.isEmpty() && t.clienteId == variables.clienteActual && t.estado != "cerrado"
+				requiere = !t.isEmpty() && t.clienteId == variables.clienteActual && t.estado != "cerrado"
 			}
-			return true
+			if ( requiere && !isSimpleValue( variables.notificar ) ) {
+				var textos = { agendar_visita: "la visita técnica" }
+				variables.notificar( "Solicité " & textos[ nombre ] & ". Un operador humano la está revisando para aprobarla; dame un momento." )
+			}
+			return requiere
 		} catch ( any e ) {
 			return true
 		}
+	}
+
+	/** Control de abuso: 1.ª advertencia, 2.ª advertencia final, 3.ª cierra la conversación */
+	function advertirUsoIndebido( motivo = "" ) {
+		variables.advertencias++
+		traza( "advertir_uso_indebido", "#variables.advertencias#/3 - #motivo#" )
+		if ( variables.advertencias >= 3 ) {
+			variables.conversacionCerrada = true
+			return { cerrar: true, responde: "Hemos cerrado esta conversación por uso indebido del canal de soporte. Si tienes un problema real con tu servicio, inicia una nueva conversación." }
+		}
+		if ( variables.advertencias == 2 ) {
+			return { cerrar: false, responde: "Advertencia final: este canal es solo para soporte de tu servicio de internet. Si el próximo mensaje no está relacionado, cerraré la conversación." }
+		}
+		return { cerrar: false, responde: "Solo puedo ayudarte con tu servicio de internet (conexión, WiFi, equipo, facturación o tickets). ¿Tienes algún problema con tu servicio?" }
+	}
+
+	/**
+	 * Red de seguridad: si la IA escribió una advertencia sin llamar la tool, se cuenta igual.
+	 * Los canales llaman esto con la respuesta de run().
+	 */
+	string function procesarRespuesta( required string respuesta ) {
+		var esAdvertencia = findNoCase( "Solo puedo ayudarte con tu servicio de internet", respuesta ) > 0
+			|| findNoCase( "Advertencia final", respuesta ) > 0
+		if ( esAdvertencia && variables.advertencias == ( variables.advertenciasAntes ?: 0 ) ) {
+			return advertirUsoIndebido( "detectado en la respuesta" ).responde
+		}
+		return respuesta
+	}
+
+	boolean function estaCerrada() {
+		return variables.conversacionCerrada
+	}
+
+	/** Con 2 o más advertencias no se crean tickets, escalamientos ni visitas */
+	private any function bloqueoPorAbuso() {
+		if ( variables.advertencias >= 2 ) {
+			return { error: "Acción bloqueada: la conversación tiene advertencias por uso indebido. No se crean tickets, visitas ni escalamientos." }
+		}
+		return ""
+	}
+
+	/** El canal (CLI o Telegram) registra aquí el texto REAL del cliente antes de cada run() */
+	function mensajeCliente( required string texto ) {
+		variables.ultimoMensajeCliente = trim( texto )
+		variables.advertenciasAntes    = variables.advertencias
+		return this
+	}
+
+	/** Consentimiento del cliente validado en código: su último mensaje debe ser afirmativo */
+	private boolean function clienteAutorizo() {
+		var m = lCase( variables.ultimoMensajeCliente )
+		return reFind( "^(s[ií]|ok|dale|acepto|autorizo|de acuerdo|claro|adelante|hazlo|procede)([\s,.!]|$)", m ) > 0
+	}
+
+	/** Confirmación de que el servicio quedó resuelto, validada en código */
+	private boolean function clienteConfirmoSolucion() {
+		var m = lCase( variables.ultimoMensajeCliente )
+		return reFind( "(funciona|ya (hay|tengo|sirve|navego)|resuelto|solucionado|listo|^s[ií]([\s,.!]|$)|gracias)", m ) > 0
 	}
 
 	function getClienteActual() {

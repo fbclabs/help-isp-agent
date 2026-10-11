@@ -1,0 +1,89 @@
+/**
+ * CAPA 2 - El MISMO agente (Agente.bx sin cambios) atendiendo por Telegram.
+ * - Long polling con getUpdates (no necesita URL pública ni webhook).
+ * - Un agente con su propia memoria por cada chat_id.
+ * - Las aprobaciones humanas (HITL) aparecen en ESTA consola: el operador aprueba aquí
+ *   mientras el cliente conversa desde su celular.
+ * Ejecutar desde la raíz:  boxlang src/telegram.bxs
+ */
+datos = new Datos()
+token = datos.cfg( "TELEGRAM_BOT_TOKEN" )
+if ( !len( token ) ) {
+	println( "[ERROR] Falta TELEGRAM_BOT_TOKEN en .env (ver docs/botfather.md)." )
+	abort;
+}
+
+tg      = new Telegram( token )
+
+/** Crea un agente para un chat; avisa al cliente por Telegram cuando una acción espera aprobación */
+function nuevoAgente( required string id ) {
+	var aviso = ( texto ) => tg.enviar( id, texto )
+	var fab   = new Agente( datos, "telegram", aviso )
+	return { fab: fab, ia: fab.crear() }
+}
+agentes = {}
+offset  = 0
+
+yo = tg.llamar( "getMe" )
+if ( !( yo.ok ?: false ) ) {
+	println( "[ERROR] Token inválido o sin internet: " & ( yo.description ?: "" ) )
+	abort;
+}
+
+println( "==========================================================" )
+println( " HELP! por Telegram  |  Bot: @" & yo.result.username & "  |  IA: " & datos.proveedor() )
+println( " Consola del OPERADOR: aquí se aprueban las acciones (HITL)" )
+println( " Ctrl+C para detener" )
+println( "==========================================================" )
+
+while ( true ) {
+	try {
+		r = tg.getUpdates( offset )
+		if ( !( r.ok ?: false ) ) {
+			println( "[TG ERROR] " & ( r.description ?: "sin detalle" ) )
+			sleep( 3000 )
+			continue;
+		}
+
+		for ( u in r.result ) {
+			offset = u.update_id + 1
+			if ( !u.keyExists( "message" ) || !u.message.keyExists( "text" ) ) continue;
+
+			chatId = tg.idTexto( u.message.chat.id )
+			texto  = trim( u.message.text )
+			println( "" )
+			println( "[Cliente " & chatId & "] " & texto )
+
+			if ( texto == "/start" || texto == "/nuevo" ) {
+				agentes[ chatId ] = nuevoAgente( chatId )
+				tg.enviar( chatId, "Hola, soy Fibra, el asistente de soporte. Cuéntame qué problema tienes con tu servicio de internet." )
+				continue;
+			}
+
+			if ( !agentes.keyExists( chatId ) ) {
+				agentes[ chatId ] = nuevoAgente( chatId )
+			}
+
+			if ( agentes[ chatId ].fab.estaCerrada() ) {
+				tg.enviar( chatId, "Esta conversación fue cerrada por uso indebido. Escribe /nuevo si tienes un problema real con tu servicio." )
+				println( "[Bloqueado " & chatId & "] mensaje ignorado (no se llama a la IA)" )
+				continue;
+			}
+
+			tg.escribiendo( chatId )
+			try {
+				agentes[ chatId ].fab.mensajeCliente( texto )
+				respuesta = agentes[ chatId ].ia.run( texto )
+				respuesta = agentes[ chatId ].fab.procesarRespuesta( respuesta )
+			} catch ( any e ) {
+				println( "[ERROR IA] " & e.message )
+				respuesta = "Tuve un problema técnico para procesar tu mensaje. ¿Puedes repetirlo en un momento?"
+			}
+			tg.enviar( chatId, respuesta )
+			println( "[Fibra -> " & chatId & "] " & respuesta )
+		}
+	} catch ( any e ) {
+		println( "[ERROR] " & e.message )
+		sleep( 2000 )
+	}
+}
