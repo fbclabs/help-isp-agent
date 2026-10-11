@@ -259,16 +259,6 @@ Revisa el texto completo: el script imprime errores de validación, pero no esta
 
 El catálogo también contiene R09, R10, R11, C05, C06 y C07, sin clientes asignados en los 12 casos. Para agregar escenarios, mantén consistentes los JSON correspondientes y añade su caso esperado si deseas validarlos con el script actual.
 
-## Evidencia
-
-| Caso | Captura |
-|---|---|
-| CLI-1001: masiva activa, sin ticket individual | ![Masiva](docs/img/01-masiva.png) |
-| CLI-1007: el cliente autoriza el reinicio y confirma el cierre | ![Reinicio](docs/img/02-reinicio.png) |
-| CLI-1003: el operador del NOC aprueba la visita | ![Visita](docs/img/03-visita-hitl.png) |
-| Uso indebido: 3 advertencias y cierre | ![Uso indebido](docs/img/04-uso-indebido.png) |
-| Telegram en el celular | ![Telegram](docs/img/05-telegram.png) |
-
 ## Problemas frecuentes
 
 | Síntoma | Qué revisar |
