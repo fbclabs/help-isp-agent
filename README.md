@@ -198,7 +198,7 @@ El reinicio simulado modifica la ONT solo en la memoria de `Datos`; no escribe `
 Hay **8 residenciales y 4 corporativos**. Todos son ficticios; los DUI/NIT respetan el formato, pero no tienen dígitos verificadores reales. Para identificarte, introduce el documento o la factura de la tabla; los códigos `CLI-*` y `CORP-*` son identificadores internos y no se aceptan como dato de identificación.
 
 | Cliente | Nombre o razón social ficticia | Identificar con | Falla esperada | Área / prioridad | Ticket / visita |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | CLI-1001 | María Elena Rivas | DUI `09901001-4` | R01: masiva del PON | NOC / P2 | Sin ticket individual ni visita |
 | CLI-1002 | José Antonio Hernández | Factura `FAC-2026-100209` | R02: energía o adaptador de ONT | Soporte / P2 | Ticket y visita aprobada |
 | CLI-1003 | Ana Lucía Martínez | DUI `09901003-0` | R03: señal óptica degradada | Campo / P3 | Ticket y visita aprobada |
