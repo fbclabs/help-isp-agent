@@ -1,24 +1,36 @@
 # HELP! — Agente de soporte para un ISP de fibra
 
-Prototipo de un asistente de soporte en español para un proveedor de internet por fibra óptica (FTTH), con clientes residenciales y corporativos de El Salvador. Usa **BoxLang**, **BoxLang AI (`bx-ai`)** y **Gemini** para conversar por terminal, consultar evidencia técnica, orientar al cliente y gestionar tickets.
+Prototipo de un asistente de soporte en español para un proveedor de internet por fibra óptica (FTTH), con clientes residenciales y corporativos de El Salvador. Usa **BoxLang** y **BoxLang AI (`bx-ai`)** con **DeepSeek** (configurable: Claude o Gemini) para conversar por **terminal y Telegram**, consultar evidencia técnica, orientar al cliente y gestionar tickets.
 
 Los sistemas del ISP se simulan con archivos JSON: CRM, facturación, monitoreo de ONT, incidentes del NOC, WiFi del hogar y enlaces dedicados. Los datos son ficticios. Los reinicios y las visitas son simulaciones; el agente sí persiste los tickets en disco.
 
 ## Qué hace
 
-El flujo definido en [el prompt de triage](prompts/triage.md) identifica al cliente por DUI, NIT o factura; consulta facturación, incidentes del PON y estado de la ONT; y luego revisa WiFi o el enlace corporativo según corresponda. Contrasta el diagnóstico con un catálogo de 18 fallas, propone pruebas caseras y crea, actualiza, escala o cierra tickets cuando corresponde.
+El flujo definido en [el prompt de triage](prompts/triage.md) identifica y verifica al cliente (DUI, NIT o factura **más** los últimos 4 dígitos de su teléfono registrado); consulta facturación, incidentes del PON y estado de la ONT; y luego revisa WiFi o el enlace corporativo según corresponda. Contrasta el diagnóstico con un catálogo de 18 fallas, propone pruebas caseras y crea, actualiza, escala o cierra tickets cuando corresponde.
 
-Incluye aprobación humana (**HITL**, human in the loop) para reiniciar una ONT, agendar una visita y cerrar un ticket. La creación de tickets bloquea en código los servicios suspendidos por mora y las masivas activas, y reutiliza un ticket existente si el cliente ya tiene uno sin cerrar.
+Las aprobaciones dependen del riesgo de la acción y se validan en código:
+
+| Acción | Quién aprueba | Cómo se valida |
+|---|---|---|
+| `reiniciar_ont` | El **cliente** | Su último mensaje debe ser afirmativo ("sí", "ok", "dale", "autorizo"…). |
+| `cerrar_ticket` | El **cliente** | Debe confirmar que el servicio ya funciona. |
+| `agendar_visita` | Un **operador del NOC** (HITL) | `HumanInTheLoopMiddleware` de `bx-ai` pide la aprobación en la consola del operador. |
+
+Otras guardas en código: no se crean tickets durante una masiva activa ni para servicios suspendidos por mora; área y prioridad salen del catálogo de fallas (no del modelo); se reutiliza el ticket abierto del cliente; las herramientas solo devuelven datos del cliente verificado.
+
+**Control de uso indebido:** si el chat se usa para bromas o temas ajenos, el agente advierte (herramienta `advertir_uso_indebido`). Desde la segunda advertencia bloquea tickets, escalamientos y visitas; a la tercera cierra la conversación y los mensajes siguientes ya no llegan al modelo.
 
 ## Arquitectura
 
 ```mermaid
 flowchart TD
-    Operador[Cliente y operador en terminal] --> CLI[src/main.bxs]
+    Cliente[Cliente en terminal] --> CLI[src/main.bxs]
+    Celular[Cliente en Telegram] --> TG[src/telegram.bxs + src/Telegram.bx]
     CLI --> Agente[src/Agente.bx]
+    TG --> Agente
     Prompt[prompts/triage.md] --> Agente
-    Agente <--> Modelo[bx-ai: Gemini por endpoint compatible con OpenAI]
-    Agente --> HITL[Aprobación humana: middleware o manual]
+    Agente <--> Modelo[bx-ai: DeepSeek / Claude / Gemini]
+    Agente --> HITL[Operador NOC aprueba visitas en consola]
     Agente --> Datos[src/Datos.bx]
     Datos --> Sistemas[CRM / BSS / OSS / NOC / ACS / enlaces / catálogo JSON]
     Datos <--> Tickets[data/tickets.json]
@@ -26,24 +38,36 @@ flowchart TD
 
 | Componente | Responsabilidad |
 |---|---|
-| `src/main.bxs` | Bucle del chat, comandos de terminal y manejo de errores. |
-| `src/Agente.bx` | Construye el agente, registra 14 herramientas, controla el cliente identificado y aplica guardas de negocio y aprobación. |
+| `src/main.bxs` | Canal terminal: bucle del chat, comandos y manejo de errores. |
+| `src/telegram.bxs` | Canal Telegram: long polling, un agente con memoria propia por chat; la consola es la del operador (HITL). |
+| `src/Telegram.bx` | Cliente mínimo de la API de Telegram (`getUpdates`, `sendMessage`, “escribiendo…”). |
+| `src/Agente.bx` | Construye el agente, registra 15 herramientas, verifica al cliente, aplica guardas de negocio, aprobaciones por riesgo y control de uso indebido. |
 | `src/Datos.bx` | Lee configuración y datos, busca clientes y fallas, simula reinicios y escribe tickets. |
 | `prompts/triage.md` | Orden de diagnóstico, reglas de conversación, seguimiento y escalamiento. |
 | `data/` | Sistemas simulados y persistencia de tickets. |
 | `docs/CONTRATOS.md` | Contratos de datos, áreas, prioridades y formato de tickets. |
 | `tests/validar_datos.bxs` | Validación determinista de consistencia y diagnósticos de los datos. |
 | `tests/casos_esperados.*` | Guiones y respuestas esperadas; no se cargan en el agente. |
-| `smoke.bxs` | Prueba aislada de conexión con Gemini y llamada a una herramienta. |
+| `smoke.bxs` | Prueba aislada de conexión con el proveedor configurado y llamada a una herramienta. |
+| `docs/botfather.md` | Cómo crear el bot de Telegram y obtener el token. |
 
-La implementación disponible cubre **CAPA 0** (datos y validación) y **CAPA 1** (agente por CLI). Las referencias a Telegram, portal corporativo y CAPA 4 describen extensiones previstas: no hay un bot de Telegram ni un servidor web implementados en este repositorio.
+La implementación cubre **CAPA 0** (datos y validación), **CAPA 1** (agente por terminal) y **CAPA 2** (el mismo agente por Telegram). El portal corporativo web quedó fuera del alcance del hackathon.
 
 ### Modelo, herramientas y memoria
 
-Gemini se utiliza mediante el proveedor `openai-compatible`, con URL `https://generativelanguage.googleapis.com/v1beta/openai`. Un middleware elimina `additionalProperties` del esquema de herramientas antes de enviarlo y muestra ciertos errores del proveedor. El código señala esta adaptación como solución a problemas de tool calling del proveedor nativo de Gemini en `bx-ai` 3.5.
+El proveedor se elige con `LLM_PROVIDER` en `.env`:
+
+| `LLM_PROVIDER` | Proveedor `bx-ai` | Modelo por defecto |
+|---|---|---|
+| `deepseek` (predeterminado, usado en la demo) | `deepseek` | `deepseek-chat` |
+| `claude` | `claude` | `claude-sonnet-5-5` |
+| `gemini` | `openai-compatible` (`https://generativelanguage.googleapis.com/v1beta/openai`) | `gemini-3.8-flash` |
+
+Para Gemini, un middleware elimina `additionalProperties` del esquema de herramientas: el proveedor nativo `gemini` de `bx-ai` 3.5 enviaba las herramientas en un formato que la API rechazaba (400).
 
 Cada agente mantiene una ventana de hasta **40 mensajes** en memoria. Las herramientas son:
 
+- Seguridad: `advertir_uso_indebido`.
 - Identificación y consultas: `identificar_cliente`, `facturacion`, `incidentes_pon`, `estado_ont`, `wifi_hogar`, `enlace_corporativo`, `buscar_kb`.
 - Tickets: `crear_ticket`, `consultar_ticket`, `actualizar_ticket`, `escalar_ticket`, `cerrar_ticket`.
 - Acciones simuladas: `reiniciar_ont`, `agendar_visita`.
@@ -69,7 +93,8 @@ Todos estos archivos están en `data/`. Los tiempos relativos del NOC se convier
 
 - Java **21 o posterior**, BoxLang OS/CLI y el módulo `bx-ai`, según los [requisitos oficiales de BoxLang AI](https://github.com/ortus-boxlang/bx-ai).
 - Git para clonar el repositorio.
-- Una clave de API de Gemini y acceso a internet para el chat y la prueba de humo.
+- Una clave de API del proveedor elegido (DeepSeek por defecto) y acceso a internet para el chat y la prueba de humo.
+- Opcional, para el canal Telegram: un bot creado con @BotFather (ver [docs/botfather.md](docs/botfather.md)).
 - Permiso de escritura en `data/tickets.json` y en el directorio de trabajo del runtime de BoxLang.
 
 El repositorio no fija versiones mediante un manifiesto de dependencias. El comentario sobre `bx-ai` 3.5 describe el contexto del código, pero no constituye un bloqueo de versión.
@@ -142,18 +167,23 @@ Windows, PowerShell:
 Copy-Item .env.example .env
 ```
 
-Edita `.env` con tu clave:
+Edita `.env` con tus claves:
 
 ```dotenv
-GEMINI_API_KEY=TU_CLAVE_REAL
-GEMINI_MODEL=gemini-2.5-flash
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=TU_CLAVE_REAL
+DEEPSEEK_MODEL=deepseek-chat
 HITL_MODO=middleware
+TELEGRAM_BOT_TOKEN=TU_TOKEN_DE_BOTFATHER
 ```
 
 | Variable | Uso | Predeterminado en el agente |
 |---|---|---|
-| `GEMINI_API_KEY` | Clave de acceso a Gemini. | Vacío; debes configurarla. |
-| `GEMINI_MODEL` | Identificador del modelo que se solicita al proveedor. | `gemini-2.5-flash` |
+| `LLM_PROVIDER` | `deepseek`, `claude` o `gemini`. | `deepseek` |
+| `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` | Clave y modelo de DeepSeek. | Vacío / `deepseek-chat` |
+| `CLAUDE_API_KEY` / `CLAUDE_MODEL` | Alternativa: Claude. | Vacío / `claude-sonnet-5-5` |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Alternativa: Gemini. | Vacío / `gemini-3.8-flash` |
+| `TELEGRAM_BOT_TOKEN` | Token del bot (solo para `src/telegram.bxs`). | Vacío |
 | `HITL_MODO` | `middleware` para aprobación mediante `bx-ai`, o `manual` para preguntar dentro de la herramienta. | `middleware` |
 
 Estos modelos son los valores de la plantilla y del código; su disponibilidad y cuota dependen de tu cuenta. Puedes configurar otro modelo compatible con llamadas a herramientas.
@@ -171,15 +201,16 @@ Ejecuta los comandos **desde la raíz del repositorio**:
 ```text
 boxlang tests/validar_datos.bxs
 boxlang smoke.bxs
-boxlang src/main.bxs
+boxlang src/main.bxs        # canal terminal
+boxlang src/telegram.bxs    # canal Telegram (la consola queda como consola del operador)
 ```
 
-El validador de datos no utiliza IA ni requiere clave de Gemini. La prueba de humo y el chat sí hacen solicitudes al proveedor y consumen cuota.
+El validador de datos no utiliza IA ni requiere clave de API. La prueba de humo y el chat sí hacen solicitudes al proveedor y consumen cuota.
 
 En la terminal del chat puedes escribir, por ejemplo:
 
 ```text
-Cliente> Mi DUI es 09901004-9.
+Cliente> Mi DUI es 09901004-9 y los últimos 4 dígitos de mi teléfono son 1004.
 Cliente> El internet está bien lento en la noche, sobre todo en los celulares.
 ```
 
@@ -195,7 +226,7 @@ El reinicio simulado modifica la ONT solo en la memoria de `Datos`; no escribe `
 
 ## Los 12 clientes de prueba
 
-Hay **8 residenciales y 4 corporativos**. Todos son ficticios; los DUI/NIT respetan el formato, pero no tienen dígitos verificadores reales. Para identificarte, introduce el documento o la factura de la tabla; los códigos `CLI-*` y `CORP-*` son identificadores internos y no se aceptan como dato de identificación.
+Hay **8 residenciales y 4 corporativos**. Todos son ficticios; los DUI/NIT respetan el formato, pero no tienen dígitos verificadores reales. Para identificarte, introduce el documento o la factura de la tabla **y** los últimos 4 dígitos del teléfono registrado, que coinciden con el número del cliente (por ejemplo `1007` para CLI-1007, `2001` para CORP-2001). Los códigos `CLI-*` y `CORP-*` son identificadores internos y no se aceptan como dato de identificación.
 
 | Cliente | Nombre o razón social ficticia | Identificar con | Falla esperada | Área / prioridad | Ticket / visita |
 |---|---|---|---|---|---|
@@ -205,7 +236,7 @@ Hay **8 residenciales y 4 corporativos**. Todos son ficticios; los DUI/NIT respe
 | CLI-1004 | Carlos Ernesto Martínez | DUI `09901004-9` | R06: saturación de WiFi 2.4 GHz | Soporte_Hogar / P4 | Ticket opcional, sin visita |
 | CLI-1005 | Rosa María López | Factura `FAC-2026-100509` | R05: suspensión por mora | Facturacion / P4 | Sin ticket técnico ni visita |
 | CLI-1006 | Luis Alberto Flores | DUI `09901006-5` | R04: pérdida de señal individual | Campo / P2 | Ticket y visita aprobada |
-| CLI-1007 | Karla Patricia Ramírez | DUI `09901007-3` | R08: sesión WAN caída | Soporte / P2 | Ticket, reinicio y cierre aprobados |
+| CLI-1007 | Karla Patricia Ramírez | DUI `09901007-3` | R08: sesión WAN caída | Soporte / P2 | Ticket; el cliente autoriza el reinicio y confirma el cierre |
 | CLI-1008 | Daniel Eduardo Pérez | Factura `FAC-2026-100810` | R07: cobertura WiFi insuficiente | Soporte_Hogar / P4 | Ticket opcional, sin visita |
 | CORP-2001 | Logística Volcán Azul, S.A. de C.V. | NIT `0614-150515-901-1` | C01: corte de última milla | Campo / P1 | Ticket, escalamiento y visita aprobada |
 | CORP-2002 | Grupo Financiero Cuscatlán Digital, S.A. | NIT `0614-020318-902-3` | C02: BGP caído | Soporte_Corporativo / P1 | Ticket, sin visita |
@@ -222,11 +253,21 @@ Los síntomas, valores de evidencia, herramientas y respuestas esperadas están 
 CAPA 0 LISTA: datos válidos y cada cliente lleva a una sola falla.
 ```
 
-Revisa el texto completo: el script imprime errores de validación, pero no establece expresamente un código de salida distinto de cero para ellos. Esta prueba verifica los datos mediante reglas fijas; no comprueba la conversación ni las decisiones de Gemini.
+Revisa el texto completo: el script imprime errores de validación, pero no establece expresamente un código de salida distinto de cero para ellos. Esta prueba verifica los datos mediante reglas fijas; no comprueba la conversación ni las decisiones del modelo.
 
 `smoke.bxs` debe mostrar una llamada `[TOOL] estado_ont( CLI-1001 )` y una respuesta que mencione **-19.5 dBm**. Es una herramienta aislada con una respuesta fija, no una lectura del OSS del cliente.
 
 El catálogo también contiene R09, R10, R11, C05, C06 y C07, sin clientes asignados en los 12 casos. Para agregar escenarios, mantén consistentes los JSON correspondientes y añade su caso esperado si deseas validarlos con el script actual.
+
+## Evidencia
+
+| Caso | Captura |
+|---|---|
+| CLI-1001: masiva activa, sin ticket individual | ![Masiva](docs/img/01-masiva.png) |
+| CLI-1007: el cliente autoriza el reinicio y confirma el cierre | ![Reinicio](docs/img/02-reinicio.png) |
+| CLI-1003: el operador del NOC aprueba la visita | ![Visita](docs/img/03-visita-hitl.png) |
+| Uso indebido: 3 advertencias y cierre | ![Uso indebido](docs/img/04-uso-indebido.png) |
+| Telegram en el celular | ![Telegram](docs/img/05-telegram.png) |
 
 ## Problemas frecuentes
 
@@ -235,8 +276,9 @@ El catálogo también contiene R09, R10, R11, C05, C06 y C07, sin clientes asign
 | `boxlang` o `install-bx-module` no se reconoce | Instalación de BoxLang y `PATH`; abre una terminal nueva. |
 | Java no se encuentra o tiene una versión antigua | `java -version`, `PATH` y `JAVA_HOME`; usa Java 21 o posterior. |
 | No se encuentra `bxModules.bxai` o `aiAgent` | Instala `bx-ai` en el runtime que ejecuta el comando. |
-| Falta `GEMINI_API_KEY` | Archivo `.env` en la raíz o variable de entorno; reemplaza el valor de ejemplo. |
-| Error 429 | Revisa cuota del proveedor y espera antes de reintentar. La plantilla propone `gemini-2.5-flash-lite` como alternativa, sujeto a disponibilidad y cuota propias. |
+| Falta `DEEPSEEK_API_KEY` (o la del proveedor elegido) | Archivo `.env` en la raíz o variable de entorno; reemplaza el valor de ejemplo. |
+| Telegram responde 409 | Ya hay otra instancia de `telegram.bxs` corriendo con el mismo token; deja solo una. |
+| Error 429 | Cuota o saldo del proveedor agotado (402/429). Recarga o cambia `LLM_PROVIDER` en `.env`. |
 | Errores al leer JSON o guardar tickets | Ejecuta desde la raíz, valida los JSON y revisa permisos de escritura. |
 | Un caso reutiliza un ticket anterior | Los tickets persisten y el agente busca uno sin cerrar para ese cliente. Usa un respaldo o una copia separada del proyecto para pruebas limpias. |
 
@@ -245,19 +287,23 @@ El catálogo también contiene R09, R10, R11, C05, C06 y C07, sin clientes asign
 - **Prototipo con datos estáticos:** no hay integraciones reales con CRM, BSS, OSS, TR-069, NOC, agenda de técnicos ni notificaciones a las áreas. Escalar registra una ficha local; agendar genera una orden simulada.
 - **Dependencia del modelo:** el chat requiere internet, clave y cuota. Las respuestas y el orden efectivo de herramientas pueden variar. El código no implementa reintentos automáticos para errores del proveedor.
 - **Reglas parcialmente declarativas:** el prompt prescribe evitar tickets durante mantenimientos activos y reiniciar solo con condiciones técnicas adecuadas; no todas esas reglas tienen una guarda equivalente en código. La guarda de facturación bloquea `suspendido`, no cualquier cuenta en mora.
-- **Identificación sin autenticación:** conocer un DUI, NIT o factura permite seleccionar al cliente. No hay verificación de identidad, roles ni control de acceso para un despliegue público. `/tickets` expone todos los tickets al operador local.
+- **Verificación básica:** la identidad se comprueba con documento y últimos 4 dígitos del teléfono; no hay OTP, roles ni autenticación fuerte para un despliegue público. `/tickets` expone todos los tickets al operador local.
+- **Telegram simple:** long polling sin webhook; la memoria por chat vive en el proceso y se pierde al reiniciarlo. Las aprobaciones del NOC se dan en la consola donde corre el bot, no en un panel web.
+- **Control de uso indebido heurístico:** depende de que el modelo clasifique el mensaje como fuera de tema; el código cuenta las advertencias y cierra la conversación.
 - **Aprobación dependiente del modo:** usa los dos valores admitidos de `HITL_MODO`. En modo middleware, la decisión se toma antes de ejecutar la herramienta; el registro detallado de rechazos implementado dentro de las herramientas corresponde al modo manual.
 - **Persistencia simple:** los tickets se reescriben como un único JSON, sin bloqueo, transacciones ni control de concurrencia. El identificador se calcula con la cantidad de tickets más uno, lo que puede producir duplicados si se eliminan registros o ejecutan varios procesos.
 - **Memoria temporal:** no se guarda el historial conversacional. La ventana es de 40 mensajes; los datos simulados se cargan al iniciar y los cambios externos no se recargan automáticamente, salvo los tickets.
 - **Agenda aproximada:** las visitas usan plazos P1/P2/P3/P4 de 4/24/48/72 horas y una fecha calculada; no comprueban disponibilidad, días hábiles ni cumplimiento real de SLA. Las fechas usan la zona horaria del runtime.
 - **Validación limitada:** no hay una suite automatizada de conversaciones ni una matriz de compatibilidad por sistema operativo; tampoco versiones de dependencias fijadas.
-- **Canales pendientes:** solo está implementada la terminal; no hay interfaz web, Telegram ni portal corporativo operativo.
+- **Canales pendientes:** terminal y Telegram funcionan; no hay interfaz web ni portal corporativo.
 
 ## Créditos y licencia
 
-- **Proyecto:** [fbclabs/help-isp-agent](https://github.com/fbclabs/help-isp-agent). El historial Git disponible atribuye la implementación inicial de las capas 0 y 1 y la prueba de humo a **fercho**.
+- **Equipo:** Fernando Chicas (líder técnico: agente, datos, Telegram), Gerson Daniel Guerrero (documentación y pruebas) y Ramírez (negocio: Devpost y pitch).
+- **Proyecto:** [fbclabs/help-isp-agent](https://github.com/fbclabs/help-isp-agent) — BoxLang + AI Hackathon, Ortus Solutions x ANIA 2026, Reto 08 "HELP!".
 - **Runtime y herramientas de IA:** [BoxLang](https://boxlang.io/) y [BoxLang AI](https://github.com/ortus-boxlang/bx-ai), de Ortus Solutions y sus colaboradores.
-- **Modelo de lenguaje:** Gemini, de Google, mediante su endpoint compatible con OpenAI.
+- **Modelo de lenguaje:** DeepSeek (`deepseek-chat`) en la demo; compatible también con Claude (Anthropic) y Gemini (Google).
+- **Mensajería:** API de bots de Telegram.
 - **Datos de demostración:** fixtures ficticios del repositorio, descritos en [docs/CONTRATOS.md](docs/CONTRATOS.md); las IP usan rangos de documentación.
 
-El repositorio no incluye un archivo `LICENSE`. Los términos de uso de BoxLang, `bx-ai` y Gemini corresponden a sus respectivos proveedores; no se debe inferir una licencia para este proyecto a partir de sus dependencias.
+El repositorio no incluye un archivo `LICENSE`. Los términos de uso de BoxLang, `bx-ai`, DeepSeek, Telegram y los demás proveedores corresponden a sus respectivos proveedores; no se debe inferir una licencia para este proyecto a partir de sus dependencias.
