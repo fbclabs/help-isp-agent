@@ -20,13 +20,16 @@ class {
 		var instrucciones = fileRead( variables.datos.getRaiz() & "prompts/triage.md", "utf-8" )
 		instrucciones &= char( 10 ) & "Fecha y hora actual: " & variables.datos.ahora() & ". Canal: " & variables.canal & "."
 
+		var yo         = this
 		var middleware = [ variables.datos.middlewareGemini() ]
 		if ( variables.hitlModo == "middleware" ) {
 			middleware.append(
 				new bxModules.bxai.models.middleware.core.HumanInTheLoopMiddleware(
-					mode                  : "cli",
-					toolsRequiringApproval: variables.TOOLS_APROBACION,
-					showArguments         : true
+					mode            : "cli",
+					showArguments   : true,
+					// Solo se pide aprobación cuando la acción es válida (cliente verificado, ticket correcto).
+					// Una acción inválida no se aprueba: la tool la rechaza sola y no ejecuta nada.
+					approvalCallback: ( context ) => yo.requiereAprobacion( context )
 				)
 			)
 		}
@@ -48,9 +51,10 @@ class {
 	private array function crearTools() {
 		var yo = this
 		return [
-			aiTool( "identificar_cliente", "Identifica al cliente por DUI (00000000-0), NIT (0000-000000-000-0) o número de factura (FAC-2026-xxxxxx). Siempre es el primer paso.",
-				( dato ) => yo.identificarCliente( arguments.dato ?: "" ) )
-				.describeArg( "dato", "DUI, NIT o número de factura exactamente como lo dio el cliente" ),
+			aiTool( "identificar_cliente", "Identifica y VERIFICA al cliente. Requiere el DUI (00000000-0), NIT o número de factura MÁS los últimos 4 dígitos del teléfono registrado. Siempre es el primer paso.",
+				( dato, verificacion ) => yo.identificarCliente( arguments.dato ?: "", arguments.verificacion ?: "" ) )
+				.describeArg( "dato", "DUI, NIT o número de factura exactamente como lo dio el cliente" )
+				.describeArg( "verificacion", "Últimos 4 dígitos del teléfono registrado, dichos por el cliente. Vacío si aún no los dio." ),
 
 			aiTool( "facturacion", "Estado de cuenta: al día, mora o suspendido; saldo, días de mora, facturas y canales de pago.",
 				( clienteId ) => yo.facturacion( arguments.clienteId ?: "" ) )
@@ -113,9 +117,8 @@ class {
 				.describeArg( "clienteId", "clienteId del cliente identificado" )
 				.describeArg( "motivo", "Por qué se reinicia" ),
 
-			aiTool( "agendar_visita", "Agenda visita técnica de Campo para un ticket. REQUIERE APROBACIÓN HUMANA.",
-				( ticketId, motivo, prioridad ) => yo.agendarVisita( arguments.ticketId ?: "", arguments.motivo ?: "", arguments.prioridad ?: "" ) )
-				.describeArg( "ticketId", "Ticket al que se asocia la visita" )
+			aiTool( "agendar_visita", "Agenda visita técnica de Campo para el ticket ABIERTO del cliente (se asocia sola). Llamar DESPUÉS de crear_ticket. REQUIERE APROBACIÓN HUMANA.",
+				( motivo, prioridad ) => yo.agendarVisita( arguments.motivo ?: "", arguments.prioridad ?: "" ) )
 				.describeArg( "motivo", "Trabajo a realizar" )
 				.describeArg( "prioridad", "P1 | P2 | P3 | P4" )
 		]
@@ -144,20 +147,36 @@ class {
 		return ""
 	}
 
-	function identificarCliente( dato = "" ) {
-		traza( "identificar_cliente", dato )
+	function identificarCliente( dato = "", verificacion = "" ) {
+		traza( "identificar_cliente", dato & ( len( verificacion ) ? ", ****" : "" ) )
 		var c = variables.datos.buscarCliente( dato )
 		if ( c.isEmpty() ) {
 			return { encontrado: false, mensaje: "No existe un cliente con ese DUI, NIT o factura. Pide verificar el dato. No inventes un cliente." }
 		}
+		// Segundo factor: últimos 4 dígitos del teléfono registrado (no se revela ningún dato antes)
+		var telefono = c.keyExists( "telefono" ) ? c.telefono : c.contactoTecnico.telefono
+		var esperado = right( reReplace( telefono, "[^0-9]", "", "all" ), 4 )
+		if ( !len( trim( verificacion ) ) ) {
+			return { encontrado: true, verificado: false, mensaje: "Antes de dar cualquier dato, pide al cliente los últimos 4 dígitos del teléfono registrado en la cuenta. No reveles nombre, plan ni dirección todavía." }
+		}
+		if ( reReplace( verificacion, "[^0-9]", "", "all" ) != esperado ) {
+			variables.clienteActual = ""
+			return { encontrado: true, verificado: false, mensaje: "La verificación no coincide. No reveles ningún dato. Pide que lo intente de nuevo o que contacte a una agencia con su DUI." }
+		}
 		variables.clienteActual = c.clienteId
 		var r = {
 			encontrado    : true,
+			verificado    : true,
 			clienteId     : c.clienteId,
 			tipo          : c.tipo,
 			plan          : c.plan,
 			direccion     : c.direccion,
 			estadoServicio: c.estadoServicio
+		}
+		// Seguimiento entre conversaciones: si tiene un ticket abierto, se informa
+		var tk = variables.datos.ticketAbierto( c.clienteId )
+		if ( !tk.isEmpty() ) {
+			r.ticketAbierto = { ticketId: tk.ticketId, estado: tk.estado, area: tk.area, prioridad: tk.prioridad, visita: tk.visita, ultimaNota: tk.historial[ tk.historial.len() ].nota }
 		}
 		if ( c.tipo == "residencial" ) {
 			r.nombre = c.nombre
@@ -349,16 +368,17 @@ class {
 		return { ejecutado: true, decisionHumana: "approve", ontDespues: o }
 	}
 
-	function agendarVisita( ticketId = "", motivo = "", prioridad = "P3" ) {
-		traza( "agendar_visita", "#ticketId#, #prioridad#" )
-		var t = ticketDelCliente( ticketId )
-		if ( t.keyExists( "error" ) ) return t
+	function agendarVisita( motivo = "", prioridad = "P3" ) {
+		traza( "agendar_visita", prioridad )
+		if ( !len( variables.clienteActual ) ) return { error: "Primero identifica y verifica al cliente." };
+		var t = variables.datos.ticketAbierto( variables.clienteActual )
+		if ( t.isEmpty() ) return { error: "El cliente no tiene ticket abierto. Llama primero crear_ticket y luego agendar_visita." };
 		if ( aprobar( "agendar_visita", "#t.ticketId# - #motivo# - #prioridad#" ) == "reject" ) {
 			registrarAccion( t.ticketId, "agendar_visita", "reject", "No agendada" )
 			return { ejecutado: false, mensaje: "El operador humano rechazó la visita. No se agendó." }
 		}
 		var horas = { P1: 4, P2: 24, P3: 48, P4: 72 }
-		var h     = horas.keyExists( uCase( prioridad ) ) ? horas[ uCase( prioridad ) ] : 48
+		var h     = horas.keyExists( t.prioridad ) ? horas[ t.prioridad ] : 48
 		var orden = "OT-" & replace( t.ticketId, "TKT-", "" )
 		var fecha = dateTimeFormat( dateAdd( "h", h, now() ), "yyyy-MM-dd" ) & ( h <= 4 ? " (urgente, hoy)" : " 08:00-12:00" )
 
@@ -389,6 +409,32 @@ class {
 		t.actualizado = variables.datos.ahora()
 		variables.datos.guardarTicket( t )
 		return { cerrado: true, ticket: t }
+	}
+
+	/** Política de aprobación (HITL): true = pedir aprobación al operador */
+	function requiereAprobacion( required struct context ) {
+		try {
+			var nombre = context.toolName ?: ""
+			if ( !len( nombre ) && context.keyExists( "tool" ) ) nombre = context.tool.getName();
+			if ( !variables.TOOLS_APROBACION.containsNoCase( nombre ) ) return false;
+			if ( !len( variables.clienteActual ) ) return false;
+			var args = {}
+			if ( context.keyExists( "toolArgs" ) && isStruct( context.toolArgs ) ) {
+				args = context.toolArgs
+			} else if ( context.keyExists( "toolCall" ) ) {
+				args = jsonDeserialize( context.toolCall.function.arguments ?: "{}" )
+			}
+			if ( nombre == "agendar_visita" ) {
+				return !variables.datos.ticketAbierto( variables.clienteActual ).isEmpty()
+			}
+			if ( nombre == "cerrar_ticket" ) {
+				var t = variables.datos.ticket( args.ticketId ?: "" )
+				return !t.isEmpty() && t.clienteId == variables.clienteActual && t.estado != "cerrado"
+			}
+			return true
+		} catch ( any e ) {
+			return true
+		}
 	}
 
 	function getClienteActual() {

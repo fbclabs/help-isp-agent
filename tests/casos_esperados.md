@@ -1,5 +1,7 @@
 # Casos esperados (CAPA 0)
 
+> Verificación: además del DUI/NIT/factura, el agente pide los **últimos 4 dígitos del teléfono**: son los mismos 4 dígitos del clienteId (CLI-1007 → 1007, CORP-2002 → 2002).
+
 > Solo para pruebas. **Nunca** se carga en el agente ni en las tools: contiene las respuestas.
 
 | Cliente | Identificar con | Falla | Área | Prioridad | Visita | HITL | Ticket |

@@ -2,39 +2,44 @@
   "escaladoA" : "",
   "estado" : "cerrado",
   "accionesEjecutadas" : [ {
-    "accion" : "reiniciar_ont",
-    "resultado" : "ONT reiniciada. WAN: up",
-    "fecha" : "2026-10-11 10:15",
+    "accion" : "agendar_visita",
+    "resultado" : "OT-000001 para 2026-10-13 08:00-12:00",
+    "fecha" : "2026-10-11 11:01",
     "decisionHumana" : "approve"
   }, {
     "accion" : "cerrar_ticket",
     "resultado" : "Cerrado",
-    "fecha" : "2026-10-11 10:16",
+    "fecha" : "2026-10-11 11:02",
     "decisionHumana" : "approve"
   } ],
-  "fallaId" : "R08",
+  "fallaId" : "R03",
   "resumen" : "",
-  "prioridad" : "P2",
-  "actualizado" : "2026-10-11 10:16",
-  "notaCierre" : "Cliente confirmó que el servicio funciona tras reinicio remoto aprobado de la ONT. WAN quedó en up con IP asignada (100.64.33.71).",
-  "clienteId" : "CLI-1007",
+  "prioridad" : "P3",
+  "actualizado" : "2026-10-11 11:02",
+  "notaCierre" : "Cliente confirma que el servicio ya funciona. Falla R03 (señal óptica degradada); se resolvió tras la revisión/ajuste del cable de fibra.",
+  "clienteId" : "CLI-1003",
   "siguientePaso" : "",
-  "cerrado" : "2026-10-11 10:16",
+  "cerrado" : "2026-10-11 11:02",
   "tipoCliente" : "residencial",
   "ticketId" : "TKT-000001",
-  "area" : "Soporte",
-  "requiereVisita" : false,
-  "visita" : { },
-  "creado" : "2026-10-11 10:15",
-  "diagnostico" : "ONT Huawei HG8145X6 online, Rx -20.4 dBm (normal), OLT Rx -23.1 dBm. WAN PPPoE down sin IP, perfil RES_500M, último error PPPOE_TIMEOUT hace 50 min + 2 reintentos fallidos. Facturación al día, sin incidentes en PON OLT-SSA-02:0/3/1. Prueba casera (apagado 30s) sin éxito.",
+  "area" : "Campo",
+  "requiereVisita" : true,
+  "visita" : {
+    "motivo" : "Señal óptica degradada (R03): revisar/limpiar conector y verificar potencia en roseta y ONT. Cliente ya revisó el cable de fibra sin mejora.",
+    "aprobadoPor" : "operador",
+    "ordenId" : "OT-000001",
+    "fecha" : "2026-10-13 08:00-12:00"
+  },
+  "creado" : "2026-10-11 11:00",
+  "diagnostico" : "Falla R03 señal óptica degradada. Cliente revisó cable de fibra entre roseta y ONT y sigue igual.",
   "historial" : [ {
     "nota" : "Ticket creado vía cli",
     "autor" : "agente",
-    "fecha" : "2026-10-11 10:15"
+    "fecha" : "2026-10-11 11:00"
   }, {
-    "nota" : "Cerrado: Cliente confirmó que el servicio funciona tras reinicio remoto aprobado de la ONT. WAN quedó en up con IP asignada (100.64.33.71).",
+    "nota" : "Cerrado: Cliente confirma que el servicio ya funciona. Falla R03 (señal óptica degradada); se resolvió tras la revisión/ajuste del cable de fibra.",
     "autor" : "agente",
-    "fecha" : "2026-10-11 10:16"
+    "fecha" : "2026-10-11 11:02"
   } ],
-  "sintoma" : "WiFi sin internet, luz PON verde e Internet apagada"
+  "sintoma" : "El internet se le va a cada rato"
 } ]

@@ -7,10 +7,16 @@
     "area": "NOC",
     "prioridad": "P2",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont"
+    ],
     "accionesHITL": [],
     "ticket": "no",
-    "resultadoEsperado": "Informa la masiva INC-2026-0451, la causa y la ETA. No abre ticket individual ni agenda visita."
+    "resultadoEsperado": "Informa la masiva INC-2026-0451, la causa y la ETA. No abre ticket individual ni agenda visita.",
+    "verificacionTelefono": "1001"
   },
   {
     "clienteId": "CLI-1002",
@@ -20,10 +26,21 @@
     "area": "Soporte",
     "prioridad": "P2",
     "requiereVisita": true,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "buscar_kb", "crear_ticket", "agendar_visita"],
-    "accionesHITL": ["agendar_visita"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "buscar_kb",
+      "crear_ticket",
+      "agendar_visita"
+    ],
+    "accionesHITL": [
+      "agendar_visita"
+    ],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta DYING_GASP sin masiva y guía las pruebas de energía. Guion: la ONT no enciende en otro tomacorriente, así que crea ticket y agenda visita para cambiar el adaptador (con aprobación)."
+    "resultadoEsperado": "Detecta DYING_GASP sin masiva y guía las pruebas de energía. Guion: la ONT no enciende en otro tomacorriente, así que crea ticket y agenda visita para cambiar el adaptador (con aprobación).",
+    "verificacionTelefono": "1002"
   },
   {
     "clienteId": "CLI-1003",
@@ -33,10 +50,24 @@
     "area": "Campo",
     "prioridad": "P3",
     "requiereVisita": true,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "buscar_kb", "crear_ticket", "agendar_visita", "consultar_ticket", "cerrar_ticket"],
-    "accionesHITL": ["agendar_visita", "cerrar_ticket"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "buscar_kb",
+      "crear_ticket",
+      "agendar_visita",
+      "consultar_ticket",
+      "cerrar_ticket"
+    ],
+    "accionesHITL": [
+      "agendar_visita",
+      "cerrar_ticket"
+    ],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta Rx -27.6 dBm (crítico), OLT Rx -30.2 y 14 flaps. Guía la revisión del patchcord. Crea ticket a Campo y agenda visita (con aprobación). Seguimiento y cierre al confirmar la reparación."
+    "resultadoEsperado": "Detecta Rx -27.6 dBm (crítico), OLT Rx -30.2 y 14 flaps. Guía la revisión del patchcord. Crea ticket a Campo y agenda visita (con aprobación). Seguimiento y cierre al confirmar la reparación.",
+    "verificacionTelefono": "1003"
   },
   {
     "clienteId": "CLI-1004",
@@ -46,10 +77,18 @@
     "area": "Soporte_Hogar",
     "prioridad": "P4",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "wifi_hogar", "buscar_kb"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "wifi_hogar",
+      "buscar_kb"
+    ],
     "accionesHITL": [],
     "ticket": "opcional",
-    "resultadoEsperado": "La ONT mide 296/148 Mbps (plan 300). La banda 2.4 GHz está al 88%, con 11 redes en el canal 6. Recomienda pasar dispositivos a 5 GHz y cambiar el canal y el ancho. Sin visita."
+    "resultadoEsperado": "La ONT mide 296/148 Mbps (plan 300). La banda 2.4 GHz está al 88%, con 11 redes en el canal 6. Recomienda pasar dispositivos a 5 GHz y cambiar el canal y el ancho. Sin visita.",
+    "verificacionTelefono": "1004"
   },
   {
     "clienteId": "CLI-1005",
@@ -59,10 +98,14 @@
     "area": "Facturacion",
     "prioridad": "P4",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion"
+    ],
     "accionesHITL": [],
     "ticket": "no",
-    "resultadoEsperado": "Informa suspensión por mora (47 días, saldo vencido $56.50), los canales de pago y la reconexión automática hasta 30 min después del pago. No crea ticket técnico."
+    "resultadoEsperado": "Informa suspensión por mora (47 días, saldo vencido $56.50), los canales de pago y la reconexión automática hasta 30 min después del pago. No crea ticket técnico.",
+    "verificacionTelefono": "1005"
   },
   {
     "clienteId": "CLI-1006",
@@ -72,10 +115,21 @@
     "area": "Campo",
     "prioridad": "P2",
     "requiereVisita": true,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "buscar_kb", "crear_ticket", "agendar_visita"],
-    "accionesHITL": ["agendar_visita"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "buscar_kb",
+      "crear_ticket",
+      "agendar_visita"
+    ],
+    "accionesHITL": [
+      "agendar_visita"
+    ],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta LOS individual: 1 de 28 ONT del PON y sin incidente activo. INC-2026-0447 está resuelto y no aplica. Pide revisar el cable y pregunta por obras o poda. Crea ticket P2 y agenda visita (con aprobación)."
+    "resultadoEsperado": "Detecta LOS individual: 1 de 28 ONT del PON y sin incidente activo. INC-2026-0447 está resuelto y no aplica. Pide revisar el cable y pregunta por obras o poda. Crea ticket P2 y agenda visita (con aprobación).",
+    "verificacionTelefono": "1006"
   },
   {
     "clienteId": "CLI-1007",
@@ -85,10 +139,23 @@
     "area": "Soporte",
     "prioridad": "P2",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "crear_ticket", "reiniciar_ont", "estado_ont", "cerrar_ticket"],
-    "accionesHITL": ["reiniciar_ont", "cerrar_ticket"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "crear_ticket",
+      "reiniciar_ont",
+      "estado_ont",
+      "cerrar_ticket"
+    ],
+    "accionesHITL": [
+      "reiniciar_ont",
+      "cerrar_ticket"
+    ],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta Rx normal, WAN down y PPPOE_TIMEOUT con facturación al día. Propone reinicio remoto (con aprobación). Después del reinicio, la WAN sube con IP. Cierra el ticket como resuelto en el primer contacto."
+    "resultadoEsperado": "Detecta Rx normal, WAN down y PPPOE_TIMEOUT con facturación al día. Propone reinicio remoto (con aprobación). Después del reinicio, la WAN sube con IP. Cierra el ticket como resuelto en el primer contacto.",
+    "verificacionTelefono": "1007"
   },
   {
     "clienteId": "CLI-1008",
@@ -98,10 +165,18 @@
     "area": "Soporte_Hogar",
     "prioridad": "P4",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "wifi_hogar", "buscar_kb"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "wifi_hogar",
+      "buscar_kb"
+    ],
     "accionesHITL": [],
     "ticket": "opcional",
-    "resultadoEsperado": "La ONT mide 497/248 Mbps (plan 500) y la utilización es normal. Los dispositivos del piso 2 están entre -77 y -82 dBm. Recomienda sacar el router del mueble y reubicarlo, cablear el cuarto o instalar un mesh."
+    "resultadoEsperado": "La ONT mide 497/248 Mbps (plan 500) y la utilización es normal. Los dispositivos del piso 2 están entre -77 y -82 dBm. Recomienda sacar el router del mueble y reubicarlo, cablear el cuarto o instalar un mesh.",
+    "verificacionTelefono": "1008"
   },
   {
     "clienteId": "CORP-2001",
@@ -111,10 +186,21 @@
     "area": "Campo",
     "prioridad": "P1",
     "requiereVisita": true,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "enlace_corporativo", "crear_ticket", "agendar_visita"],
-    "accionesHITL": ["agendar_visita"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "enlace_corporativo",
+      "crear_ticket",
+      "agendar_visita"
+    ],
+    "accionesHITL": [
+      "agendar_visita"
+    ],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta LOS en la ONT del enlace, sin masiva en el PON y la WAN del CPE en down. Crea ticket P1, escala al NOC y agenda visita urgente (con aprobación). Informa el SLA de 4 h de restauración, con 35 min transcurridos."
+    "resultadoEsperado": "Detecta LOS en la ONT del enlace, sin masiva en el PON y la WAN del CPE en down. Crea ticket P1, escala al NOC y agenda visita urgente (con aprobación). Informa el SLA de 4 h de restauración, con 35 min transcurridos.",
+    "verificacionTelefono": "2001"
   },
   {
     "clienteId": "CORP-2002",
@@ -124,10 +210,18 @@
     "area": "Soporte_Corporativo",
     "prioridad": "P1",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "enlace_corporativo", "crear_ticket"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "enlace_corporativo",
+      "crear_ticket"
+    ],
     "accionesHITL": [],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta capa física y VLAN correctas, ping al gateway correcto y BGP en Active con 0 prefijos. Relaciona la caída con el cambio de ACL del cliente de hace 90 min. Pide revisar TCP/179, el ASN y MD5. Ticket P1 a Soporte_Corporativo. Sin visita."
+    "resultadoEsperado": "Detecta capa física y VLAN correctas, ping al gateway correcto y BGP en Active con 0 prefijos. Relaciona la caída con el cambio de ACL del cliente de hace 90 min. Pide revisar TCP/179, el ASN y MD5. Ticket P1 a Soporte_Corporativo. Sin visita.",
+    "verificacionTelefono": "2002"
   },
   {
     "clienteId": "CORP-2003",
@@ -137,10 +231,18 @@
     "area": "Soporte_Corporativo",
     "prioridad": "P3",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "enlace_corporativo", "crear_ticket"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "enlace_corporativo",
+      "crear_ticket"
+    ],
     "accionesHITL": [],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta p95 de 97% sobre 200 Mbps de 08:30 a 12:00, latencia de 182 ms, pérdida de 3.6% y 18452 descartes de salida, con 0 errores CRC. Identifica el servidor de respaldos (46%). Recomienda QoS, mover los respaldos fuera de horario y evaluar una ampliación."
+    "resultadoEsperado": "Detecta p95 de 97% sobre 200 Mbps de 08:30 a 12:00, latencia de 182 ms, pérdida de 3.6% y 18452 descartes de salida, con 0 errores CRC. Identifica el servidor de respaldos (46%). Recomienda QoS, mover los respaldos fuera de horario y evaluar una ampliación.",
+    "verificacionTelefono": "2003"
   },
   {
     "clienteId": "CORP-2004",
@@ -150,9 +252,17 @@
     "area": "Soporte_Corporativo",
     "prioridad": "P1",
     "requiereVisita": false,
-    "toolsEsperadas": ["identificar_cliente", "facturacion", "incidentes_pon", "estado_ont", "enlace_corporativo", "crear_ticket"],
+    "toolsEsperadas": [
+      "identificar_cliente",
+      "facturacion",
+      "incidentes_pon",
+      "estado_ont",
+      "enlace_corporativo",
+      "crear_ticket"
+    ],
     "accionesHITL": [],
     "ticket": "crear",
-    "resultadoEsperado": "Detecta ONT online y WAN up, pero el CPE está sin VLAN (se espera la 310), con 0 MAC aprendidas y ARP incompleto. Guía a TI para configurar la subinterfaz con VLAN 310 e IP 203.0.113.14/30. Ticket P1 a Soporte_Corporativo."
+    "resultadoEsperado": "Detecta ONT online y WAN up, pero el CPE está sin VLAN (se espera la 310), con 0 MAC aprendidas y ARP incompleto. Guía a TI para configurar la subinterfaz con VLAN 310 e IP 203.0.113.14/30. Ticket P1 a Soporte_Corporativo.",
+    "verificacionTelefono": "2004"
   }
 ]
