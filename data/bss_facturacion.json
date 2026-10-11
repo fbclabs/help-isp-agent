@@ -1,0 +1,356 @@
+{
+  "nota": "Montos en USD con IVA incluido. Datos ficticios.",
+  "canalesPago": [
+    "App o portal web del ISP",
+    "Agentes bancarios y corresponsales",
+    "Transferencia a cuenta del ISP (gestor corporativo)",
+    "Oficinas comerciales"
+  ],
+  "reglaReconexion": "La reconexión es automática hasta 30 minutos después de registrado el pago.",
+  "cuentas": [
+    {
+      "clienteId": "CLI-1001",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 39.55,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100109",
+          "periodo": "2026-09",
+          "monto": 39.55,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100110",
+          "periodo": "2026-10",
+          "monto": 39.55,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1002",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 28.25,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100209",
+          "periodo": "2026-09",
+          "monto": 28.25,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100210",
+          "periodo": "2026-10",
+          "monto": 28.25,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1003",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 39.55,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100309",
+          "periodo": "2026-09",
+          "monto": 39.55,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100310",
+          "periodo": "2026-10",
+          "monto": 39.55,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1004",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 39.55,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100409",
+          "periodo": "2026-09",
+          "monto": 39.55,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100410",
+          "periodo": "2026-10",
+          "monto": 39.55,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1005",
+      "estado": "suspendido",
+      "saldoVencido": 56.5,
+      "saldoPorVencer": 28.25,
+      "diasMora": 47,
+      "fechaSuspension": "2026-10-06",
+      "fechaUltimoPago": "2026-07-24",
+      "metodoPago": "Efectivo en agente",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100508",
+          "periodo": "2026-08",
+          "monto": 28.25,
+          "fechaEmision": "2026-08-01",
+          "vencimiento": "2026-08-25",
+          "estado": "vencida"
+        },
+        {
+          "numero": "FAC-2026-100509",
+          "periodo": "2026-09",
+          "monto": 28.25,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "vencida"
+        },
+        {
+          "numero": "FAC-2026-100510",
+          "periodo": "2026-10",
+          "monto": 28.25,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1006",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 39.55,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100609",
+          "periodo": "2026-09",
+          "monto": 39.55,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100610",
+          "periodo": "2026-10",
+          "monto": 39.55,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1007",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 50.85,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100709",
+          "periodo": "2026-09",
+          "monto": 50.85,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100710",
+          "periodo": "2026-10",
+          "monto": 50.85,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1008",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 50.85,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-20",
+      "metodoPago": "Cargo automático a tarjeta",
+      "facturas": [
+        {
+          "numero": "FAC-2026-100809",
+          "periodo": "2026-09",
+          "monto": 50.85,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-09-25",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-100810",
+          "periodo": "2026-10",
+          "monto": 50.85,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-25",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CORP-2001",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 508.5,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-28",
+      "metodoPago": "Transferencia (crédito 30 días)",
+      "facturas": [
+        {
+          "numero": "FAC-2026-200109",
+          "periodo": "2026-09",
+          "monto": 508.5,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-10-01",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-200110",
+          "periodo": "2026-10",
+          "monto": 508.5,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-31",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CORP-2002",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 1695.0,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-28",
+      "metodoPago": "Transferencia (crédito 30 días)",
+      "facturas": [
+        {
+          "numero": "FAC-2026-200209",
+          "periodo": "2026-09",
+          "monto": 1695.0,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-10-01",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-200210",
+          "periodo": "2026-10",
+          "monto": 1695.0,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-31",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CORP-2003",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 881.4,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-28",
+      "metodoPago": "Transferencia (crédito 30 días)",
+      "facturas": [
+        {
+          "numero": "FAC-2026-200309",
+          "periodo": "2026-09",
+          "monto": 881.4,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-10-01",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-200310",
+          "periodo": "2026-10",
+          "monto": 881.4,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-31",
+          "estado": "emitida"
+        }
+      ]
+    },
+    {
+      "clienteId": "CORP-2004",
+      "estado": "al_dia",
+      "saldoVencido": 0,
+      "saldoPorVencer": 508.5,
+      "diasMora": 0,
+      "fechaSuspension": "",
+      "fechaUltimoPago": "2026-09-28",
+      "metodoPago": "Transferencia (crédito 30 días)",
+      "facturas": [
+        {
+          "numero": "FAC-2026-200409",
+          "periodo": "2026-09",
+          "monto": 508.5,
+          "fechaEmision": "2026-09-01",
+          "vencimiento": "2026-10-01",
+          "estado": "pagada"
+        },
+        {
+          "numero": "FAC-2026-200410",
+          "periodo": "2026-10",
+          "monto": 508.5,
+          "fechaEmision": "2026-10-01",
+          "vencimiento": "2026-10-31",
+          "estado": "emitida"
+        }
+      ]
+    }
+  ]
+}

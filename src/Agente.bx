@@ -1,0 +1,389 @@
+/**
+ * CAPA 1 - Agente de soporte FTTH (BoxLang AI).
+ * Una instancia = una conversación (CLI o un chat de Telegram).
+ * Uso:  agente = new Agente( new Datos() ).crear()
+ */
+class {
+
+	function init( required any datos, string canal = "cli" ) {
+		// Tools que requieren aprobación humana (aplicado en código, no por la IA)
+		variables.TOOLS_APROBACION = [ "reiniciar_ont", "agendar_visita", "cerrar_ticket" ]
+		variables.datos         = datos
+		variables.canal         = canal
+		variables.clienteActual = ""
+		variables.hitlModo      = lCase( datos.cfg( "HITL_MODO", "middleware" ) )
+		return this
+	}
+
+	/** Construye y devuelve el aiAgent listo para .run() */
+	function crear() {
+		var instrucciones = fileRead( variables.datos.getRaiz() & "prompts/triage.md", "utf-8" )
+		instrucciones &= char( 10 ) & "Fecha y hora actual: " & variables.datos.ahora() & ". Canal: " & variables.canal & "."
+
+		var middleware = [ variables.datos.middlewareGemini() ]
+		if ( variables.hitlModo == "middleware" ) {
+			middleware.append(
+				new bxModules.bxai.models.middleware.core.HumanInTheLoopMiddleware(
+					mode                  : "cli",
+					toolsRequiringApproval: variables.TOOLS_APROBACION,
+					showArguments         : true
+				)
+			)
+		}
+
+		return aiAgent(
+			name        : "SoporteFTTH",
+			description : "Agente de soporte de un ISP de fibra que atiende el caso de principio a fin",
+			instructions: instrucciones,
+			model       : variables.datos.modelo(),
+			memory      : aiMemory( memory: "window", config: { maxMessages: 40 } ),
+			tools       : crearTools(),
+			middleware  : middleware
+		)
+	}
+
+	// =====================================================================
+	// Tools
+	// =====================================================================
+	private array function crearTools() {
+		var yo = this
+		return [
+			aiTool( "identificar_cliente", "Identifica al cliente por DUI (00000000-0), NIT (0000-000000-000-0) o número de factura (FAC-2026-xxxxxx). Siempre es el primer paso.",
+				( dato ) => yo.identificarCliente( arguments.dato ?: "" ) )
+				.describeArg( "dato", "DUI, NIT o número de factura exactamente como lo dio el cliente" ),
+
+			aiTool( "facturacion", "Estado de cuenta: al día, mora o suspendido; saldo, días de mora, facturas y canales de pago.",
+				( clienteId ) => yo.facturacion( arguments.clienteId ?: "" ) )
+				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
+
+			aiTool( "incidentes_pon", "Incidentes del NOC (masivas, mantenimientos) y resumen de ONT del PON del cliente.",
+				( clienteId ) => yo.incidentesPon( arguments.clienteId ?: "" ) )
+				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
+
+			aiTool( "estado_ont", "Estado de la ONT: online/los/offline, Rx/Tx en dBm, Rx en OLT, flaps, eventos y estado WAN.",
+				( clienteId ) => yo.estadoOnt( arguments.clienteId ?: "" ) )
+				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
+
+			aiTool( "wifi_hogar", "WiFi del hogar (solo residencial): uso por banda, canales, redes vecinas, RSSI de dispositivos y prueba de velocidad de la ONT.",
+				( clienteId ) => yo.wifiHogar( arguments.clienteId ?: "" ) )
+				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
+
+			aiTool( "enlace_corporativo", "Enlace dedicado (solo corporativo): VLAN, BGP, CPE, interfaces, métricas de uso/latencia y SLA.",
+				( clienteId ) => yo.enlaceCorporativo( arguments.clienteId ?: "" ) )
+				.describeArg( "clienteId", "clienteId devuelto por identificar_cliente" ),
+
+			aiTool( "buscar_kb", "Busca en la base de conocimiento de fallas: indicadores, pruebas caseras, resolución, área y si requiere visita.",
+				( consulta ) => yo.buscarKb( arguments.consulta ?: "" ) )
+				.describeArg( "consulta", "Palabras clave del síntoma o diagnóstico, o el id de falla (ej. R03)" ),
+
+			aiTool( "crear_ticket", "Crea un ticket con el diagnóstico. No usar en masivas ni en mora.",
+				( clienteId, fallaId, sintoma, diagnostico, area, prioridad, requiereVisita ) => yo.crearTicket( arguments.clienteId ?: "", arguments.fallaId ?: "", arguments.sintoma ?: "", arguments.diagnostico ?: "", arguments.area ?: "", arguments.prioridad ?: "", arguments.requiereVisita ?: "" ) )
+				.describeArg( "clienteId", "clienteId del cliente identificado" )
+				.describeArg( "fallaId", "Id de la falla del catálogo (ej. R03)" )
+				.describeArg( "sintoma", "Síntoma con palabras del cliente" )
+				.describeArg( "diagnostico", "Diagnóstico con los valores medidos (evidencia)" )
+				.describeArg( "area", "NOC | Soporte | Soporte_Hogar | Campo | Facturacion | Soporte_Corporativo" )
+				.describeArg( "prioridad", "P1 | P2 | P3 | P4" )
+				.describeArg( "requiereVisita", "si | no" ),
+
+			aiTool( "consultar_ticket", "Consulta un ticket del cliente identificado.",
+				( ticketId ) => yo.consultarTicket( arguments.ticketId ?: "" ) )
+				.describeArg( "ticketId", "Id del ticket (TKT-000001)" ),
+
+			aiTool( "actualizar_ticket", "Agrega una nota al ticket y opcionalmente cambia su estado.",
+				( ticketId, nota, estado ) => yo.actualizarTicket( arguments.ticketId ?: "", arguments.nota ?: "", arguments.estado ?: "" ) )
+				.describeArg( "ticketId", "Id del ticket" )
+				.describeArg( "nota", "Nota de seguimiento" )
+				.describeArg( "estado", "abierto | en_progreso | pendiente_cliente | (vacío para no cambiar)" ),
+
+			aiTool( "escalar_ticket", "Escala el ticket a un área humana con la ficha completa del caso.",
+				( ticketId, area, resumen, siguientePaso ) => yo.escalarTicket( arguments.ticketId ?: "", arguments.area ?: "", arguments.resumen ?: "", arguments.siguientePaso ?: "" ) )
+				.describeArg( "ticketId", "Id del ticket" )
+				.describeArg( "area", "Área que recibe el caso" )
+				.describeArg( "resumen", "Resumen de 3 líneas: síntoma, evidencia, acciones realizadas" )
+				.describeArg( "siguientePaso", "Qué debe hacer el humano" ),
+
+			aiTool( "cerrar_ticket", "Cierra un ticket resuelto. REQUIERE APROBACIÓN HUMANA.",
+				( ticketId, notaCierre ) => yo.cerrarTicket( arguments.ticketId ?: "", arguments.notaCierre ?: "" ) )
+				.describeArg( "ticketId", "Id del ticket" )
+				.describeArg( "notaCierre", "Cómo se resolvió" ),
+
+			aiTool( "reiniciar_ont", "Reinicia la ONT en remoto. REQUIERE APROBACIÓN HUMANA. Solo si la ONT está online con Rx normal y la WAN caída.",
+				( clienteId, motivo ) => yo.reiniciarOnt( arguments.clienteId ?: "", arguments.motivo ?: "" ) )
+				.describeArg( "clienteId", "clienteId del cliente identificado" )
+				.describeArg( "motivo", "Por qué se reinicia" ),
+
+			aiTool( "agendar_visita", "Agenda visita técnica de Campo para un ticket. REQUIERE APROBACIÓN HUMANA.",
+				( ticketId, motivo, prioridad ) => yo.agendarVisita( arguments.ticketId ?: "", arguments.motivo ?: "", arguments.prioridad ?: "" ) )
+				.describeArg( "ticketId", "Ticket al que se asocia la visita" )
+				.describeArg( "motivo", "Trabajo a realizar" )
+				.describeArg( "prioridad", "P1 | P2 | P3 | P4" )
+		]
+	}
+
+	// =====================================================================
+	// Lógica de cada tool (pública para que los closures la llamen)
+	// =====================================================================
+
+	private void function traza( required string nombre, string args = "" ) {
+		println( "[TOOL] #nombre#( #args# )" )
+	}
+
+	/** Seguridad: solo se consultan datos del cliente identificado en esta conversación. */
+	private any function validarCliente( required string clienteId ) {
+		if ( !len( variables.clienteActual ) ) {
+			return { error: "Primero identifica al cliente con identificar_cliente (DUI, NIT o factura)." }
+		}
+		if ( uCase( trim( clienteId ) ) != variables.clienteActual ) {
+			return { error: "Solo puedes consultar datos del cliente identificado en esta conversación (#variables.clienteActual#). No compartas datos de otros clientes." }
+		}
+		return ""
+	}
+
+	function identificarCliente( dato = "" ) {
+		traza( "identificar_cliente", dato )
+		var c = variables.datos.buscarCliente( dato )
+		if ( c.isEmpty() ) {
+			return { encontrado: false, mensaje: "No existe un cliente con ese DUI, NIT o factura. Pide verificar el dato. No inventes un cliente." }
+		}
+		variables.clienteActual = c.clienteId
+		var r = {
+			encontrado    : true,
+			clienteId     : c.clienteId,
+			tipo          : c.tipo,
+			plan          : c.plan,
+			direccion     : c.direccion,
+			estadoServicio: c.estadoServicio
+		}
+		if ( c.tipo == "residencial" ) {
+			r.nombre = c.nombre
+		} else {
+			r.razonSocial     = c.razonSocial
+			r.contactoTecnico = c.contactoTecnico
+			r.enlaceId        = c.enlaceId
+		}
+		return r
+	}
+
+	function facturacion( clienteId = "" ) {
+		traza( "facturacion", clienteId )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		return variables.datos.cuenta( variables.clienteActual )
+	}
+
+	function incidentesPon( clienteId = "" ) {
+		traza( "incidentes_pon", clienteId )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		var c = variables.datos.cliente( variables.clienteActual )
+		return variables.datos.incidentesPon( c.pon )
+	}
+
+	function estadoOnt( clienteId = "" ) {
+		traza( "estado_ont", clienteId )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		var o = variables.datos.ont( variables.clienteActual )
+		o.umbrales = variables.datos.umbrales().ontRxDbm
+		return o
+	}
+
+	function wifiHogar( clienteId = "" ) {
+		traza( "wifi_hogar", clienteId )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		var w = variables.datos.wifi( variables.clienteActual )
+		return w.isEmpty() ? { error: "Cliente corporativo: no hay WiFi administrado. Usa enlace_corporativo." } : w
+	}
+
+	function enlaceCorporativo( clienteId = "" ) {
+		traza( "enlace_corporativo", clienteId )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		var e = variables.datos.enlace( variables.clienteActual )
+		return e.isEmpty() ? { error: "Cliente residencial: no tiene enlace corporativo. Usa wifi_hogar." } : e
+	}
+
+	function buscarKb( consulta = "" ) {
+		traza( "buscar_kb", consulta )
+		var r = variables.datos.buscarKb( consulta )
+		return r.len() ? r : { mensaje: "Sin resultados en la base de conocimiento. No inventes un procedimiento; escala a un humano." }
+	}
+
+	function crearTicket( clienteId = "", fallaId = "", sintoma = "", diagnostico = "", area = "", prioridad = "P3", requiereVisita = "no" ) {
+		traza( "crear_ticket", "#clienteId#, #fallaId#, #area#, #prioridad#" )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+
+		if ( !variables.datos.areas().containsNoCase( area ) ) {
+			return { error: "Área inválida. Usa: " & variables.datos.areas().toList( ", " ) }
+		}
+
+		// Guardas de negocio en código
+		var cta = variables.datos.cuenta( variables.clienteActual )
+		if ( cta.estado == "suspendido" ) {
+			return { error: "Servicio suspendido por mora: no se crea ticket técnico. Informa saldo y canales de pago." }
+		}
+		var cli = variables.datos.cliente( variables.clienteActual )
+		var noc = variables.datos.incidentesPon( cli.pon )
+		for ( var i in noc.incidentes ) {
+			if ( i.tipo == "masiva" && i.estado == "activo" ) {
+				return { error: "Hay una masiva activa (#i.incidenteId#) en el PON: no se crea ticket individual. Informa el incidente y su ETA." }
+			}
+		}
+		var abierto = variables.datos.ticketAbierto( variables.clienteActual )
+		if ( !abierto.isEmpty() ) {
+			return { mensaje: "Ya existe un ticket abierto para este cliente; úsalo.", ticket: abierto }
+		}
+
+		var t = {
+			ticketId          : variables.datos.nuevoTicketId(),
+			clienteId         : variables.clienteActual,
+			tipoCliente       : cli.tipo,
+			fallaId           : uCase( fallaId ),
+			sintoma           : sintoma,
+			diagnostico       : diagnostico,
+			area              : area,
+			prioridad         : uCase( prioridad ),
+			estado            : "abierto",
+			requiereVisita    : lCase( requiereVisita ) == "si" || lCase( requiereVisita ) == "true",
+			visita            : {},
+			accionesEjecutadas: [],
+			historial         : [ { fecha: variables.datos.ahora(), autor: "agente", nota: "Ticket creado vía " & variables.canal } ],
+			escaladoA         : "",
+			resumen           : "",
+			siguientePaso     : "",
+			creado            : variables.datos.ahora(),
+			actualizado       : variables.datos.ahora(),
+			cerrado           : "",
+			notaCierre        : ""
+		}
+		variables.datos.guardarTicket( t )
+		return { creado: true, ticket: t }
+	}
+
+	/** Devuelve el ticket solo si pertenece al cliente identificado. */
+	private any function ticketDelCliente( required string ticketId ) {
+		if ( !len( variables.clienteActual ) ) {
+			return { error: "Primero identifica al cliente." }
+		}
+		var t = variables.datos.ticket( ticketId )
+		if ( t.isEmpty() ) return { error: "No existe el ticket #ticketId#." }
+		if ( t.clienteId != variables.clienteActual ) return { error: "Ese ticket no pertenece al cliente identificado." }
+		return t
+	}
+
+	function consultarTicket( ticketId = "" ) {
+		traza( "consultar_ticket", ticketId )
+		return ticketDelCliente( ticketId )
+	}
+
+	function actualizarTicket( ticketId = "", nota = "", estado = "" ) {
+		traza( "actualizar_ticket", "#ticketId#, #estado#" )
+		var t = ticketDelCliente( ticketId )
+		if ( t.keyExists( "error" ) ) return t
+		if ( len( trim( estado ) ) && estado != "cerrado" ) t.estado = trim( estado )
+		t.historial.append( { fecha: variables.datos.ahora(), autor: "agente", nota: nota } )
+		t.actualizado = variables.datos.ahora()
+		variables.datos.guardarTicket( t )
+		return { actualizado: true, ticket: t }
+	}
+
+	function escalarTicket( ticketId = "", area = "", resumen = "", siguientePaso = "" ) {
+		traza( "escalar_ticket", "#ticketId#, #area#" )
+		var t = ticketDelCliente( ticketId )
+		if ( t.keyExists( "error" ) ) return t
+		t.estado        = "escalado"
+		t.escaladoA     = area
+		t.resumen       = resumen
+		t.siguientePaso = siguientePaso
+		t.historial.append( { fecha: variables.datos.ahora(), autor: "agente", nota: "Escalado a #area#" } )
+		t.actualizado = variables.datos.ahora()
+		variables.datos.guardarTicket( t )
+		return { escalado: true, fichaCaso: t }
+	}
+
+	// ---------- Acciones críticas (HITL) ----------
+
+	/** Modo manual: el operador aprueba en la consola. En modo middleware ya aprobó bx-ai. */
+	private string function aprobar( required string accion, required string detalle ) {
+		if ( variables.hitlModo != "manual" ) return "approve"
+		println( "" )
+		println( "=== APROBACIÓN HUMANA REQUERIDA ===" )
+		println( "Acción : #accion#" )
+		println( "Detalle: #detalle#" )
+		var r = lCase( trim( cliRead( "¿Aprobar? (s/n): " ) ) )
+		return ( r == "s" || r == "si" ) ? "approve" : "reject"
+	}
+
+	private void function registrarAccion( required string ticketId, required string accion, required string decision, required string resultado ) {
+		if ( !len( ticketId ) ) return
+		var t = variables.datos.ticket( ticketId )
+		if ( t.isEmpty() ) return
+		t.accionesEjecutadas.append( { accion: accion, decisionHumana: decision, resultado: resultado, fecha: variables.datos.ahora() } )
+		t.actualizado = variables.datos.ahora()
+		variables.datos.guardarTicket( t )
+	}
+
+	function reiniciarOnt( clienteId = "", motivo = "" ) {
+		traza( "reiniciar_ont", "#clienteId#, #motivo#" )
+		var err = validarCliente( clienteId )
+		if ( !isSimpleValue( err ) ) return err
+		var tk = variables.datos.ticketAbierto( variables.clienteActual )
+		var tkId = tk.isEmpty() ? "" : tk.ticketId
+		if ( aprobar( "reiniciar_ont", "#variables.clienteActual# - #motivo#" ) == "reject" ) {
+			registrarAccion( tkId, "reiniciar_ont", "reject", "No ejecutado" )
+			return { ejecutado: false, mensaje: "El operador humano rechazó el reinicio. No se ejecutó." }
+		}
+		var o = variables.datos.reiniciarOnt( variables.clienteActual )
+		registrarAccion( tkId, "reiniciar_ont", "approve", "ONT reiniciada. WAN: #o.wan.estado#" )
+		return { ejecutado: true, decisionHumana: "approve", ontDespues: o }
+	}
+
+	function agendarVisita( ticketId = "", motivo = "", prioridad = "P3" ) {
+		traza( "agendar_visita", "#ticketId#, #prioridad#" )
+		var t = ticketDelCliente( ticketId )
+		if ( t.keyExists( "error" ) ) return t
+		if ( aprobar( "agendar_visita", "#t.ticketId# - #motivo# - #prioridad#" ) == "reject" ) {
+			registrarAccion( t.ticketId, "agendar_visita", "reject", "No agendada" )
+			return { ejecutado: false, mensaje: "El operador humano rechazó la visita. No se agendó." }
+		}
+		var horas = { P1: 4, P2: 24, P3: 48, P4: 72 }
+		var h     = horas.keyExists( uCase( prioridad ) ) ? horas[ uCase( prioridad ) ] : 48
+		var orden = "OT-" & replace( t.ticketId, "TKT-", "" )
+		var fecha = dateTimeFormat( dateAdd( "h", h, now() ), "yyyy-MM-dd" ) & ( h <= 4 ? " (urgente, hoy)" : " 08:00-12:00" )
+
+		t = variables.datos.ticket( t.ticketId )
+		t.visita         = { ordenId: orden, fecha: fecha, motivo: motivo, aprobadoPor: "operador" }
+		t.requiereVisita = true
+		t.estado         = "en_progreso"
+		t.accionesEjecutadas.append( { accion: "agendar_visita", decisionHumana: "approve", resultado: "#orden# para #fecha#", fecha: variables.datos.ahora() } )
+		t.actualizado = variables.datos.ahora()
+		variables.datos.guardarTicket( t )
+		return { ejecutado: true, decisionHumana: "approve", ordenId: orden, fecha: fecha }
+	}
+
+	function cerrarTicket( ticketId = "", notaCierre = "" ) {
+		traza( "cerrar_ticket", ticketId )
+		var t = ticketDelCliente( ticketId )
+		if ( t.keyExists( "error" ) ) return t
+		if ( aprobar( "cerrar_ticket", "#t.ticketId# - #notaCierre#" ) == "reject" ) {
+			registrarAccion( t.ticketId, "cerrar_ticket", "reject", "Sigue abierto" )
+			return { ejecutado: false, mensaje: "El operador humano rechazó el cierre. El ticket sigue abierto." }
+		}
+		t = variables.datos.ticket( t.ticketId )
+		t.estado     = "cerrado"
+		t.cerrado    = variables.datos.ahora()
+		t.notaCierre = notaCierre
+		t.accionesEjecutadas.append( { accion: "cerrar_ticket", decisionHumana: "approve", resultado: "Cerrado", fecha: variables.datos.ahora() } )
+		t.historial.append( { fecha: variables.datos.ahora(), autor: "agente", nota: "Cerrado: " & notaCierre } )
+		t.actualizado = variables.datos.ahora()
+		variables.datos.guardarTicket( t )
+		return { cerrado: true, ticket: t }
+	}
+
+	function getClienteActual() {
+		return variables.clienteActual
+	}
+}

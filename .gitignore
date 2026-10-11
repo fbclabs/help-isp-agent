@@ -1,0 +1,5 @@
+.env
+.DS_Store
+boxlang_modules/
+data/pruebas_corp/*.json
+!data/pruebas_corp/.gitkeep

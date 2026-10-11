@@ -1,0 +1,380 @@
+[
+  {
+    "clienteId": "CLI-1001",
+    "ontSerial": "HWTC1A2B1001",
+    "modelo": "Huawei EG8145V5",
+    "olt": "OLT-SSA-01",
+    "pon": "OLT-SSA-01:0/1/3",
+    "onuId": 7,
+    "estado": "los",
+    "rxDbm": "sin_lectura",
+    "txDbm": "sin_lectura",
+    "oltRxDbm": "sin_lectura",
+    "rxUltimaLecturaDbm": -19.4,
+    "ultimoEvento": "LOS",
+    "haceMinUltimoEvento": 110,
+    "flaps24h": 1,
+    "uptimeHoras": 0,
+    "eventos24h": [
+      {
+        "evento": "LOS",
+        "haceMin": 110
+      }
+    ],
+    "wan": {
+      "estado": "down",
+      "tipo": "PPPoE",
+      "ip": "",
+      "perfil": "RES_300M",
+      "ultimoError": "Sin enlace óptico"
+    }
+  },
+  {
+    "clienteId": "CLI-1002",
+    "ontSerial": "HWTC1A2B1002",
+    "modelo": "Huawei EG8145V5",
+    "olt": "OLT-SSA-01",
+    "pon": "OLT-SSA-01:0/2/1",
+    "onuId": 12,
+    "estado": "offline",
+    "rxDbm": "sin_lectura",
+    "txDbm": "sin_lectura",
+    "oltRxDbm": "sin_lectura",
+    "rxUltimaLecturaDbm": -20.1,
+    "ultimoEvento": "DYING_GASP",
+    "haceMinUltimoEvento": 40,
+    "flaps24h": 1,
+    "uptimeHoras": 0,
+    "eventos24h": [
+      {
+        "evento": "DYING_GASP",
+        "haceMin": 40
+      }
+    ],
+    "wan": {
+      "estado": "down",
+      "tipo": "PPPoE",
+      "ip": "",
+      "perfil": "RES_100M",
+      "ultimoError": "ONT sin energía"
+    }
+  },
+  {
+    "clienteId": "CLI-1003",
+    "ontSerial": "HWTC1A2B1003",
+    "modelo": "Huawei EG8145V5",
+    "olt": "OLT-SSA-01",
+    "pon": "OLT-SSA-01:0/2/4",
+    "onuId": 3,
+    "estado": "online",
+    "rxDbm": -27.6,
+    "txDbm": 2.1,
+    "oltRxDbm": -30.2,
+    "rxUltimaLecturaDbm": -27.6,
+    "ultimoEvento": "LOS_RECUPERADO",
+    "haceMinUltimoEvento": 25,
+    "flaps24h": 14,
+    "uptimeHoras": 0.4,
+    "eventos24h": [
+      {
+        "evento": "LOS",
+        "haceMin": 27
+      },
+      {
+        "evento": "LOS_RECUPERADO",
+        "haceMin": 25
+      },
+      {
+        "evento": "LOS",
+        "haceMin": 96
+      },
+      {
+        "evento": "LOS_RECUPERADO",
+        "haceMin": 93
+      },
+      {
+        "evento": "LOS",
+        "haceMin": 210
+      },
+      {
+        "evento": "LOS_RECUPERADO",
+        "haceMin": 207
+      }
+    ],
+    "wan": {
+      "estado": "up",
+      "tipo": "PPPoE",
+      "ip": "100.64.12.33",
+      "perfil": "RES_300M",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CLI-1004",
+    "ontSerial": "HWTC1A2B1004",
+    "modelo": "Huawei EG8145V5",
+    "olt": "OLT-SSA-02",
+    "pon": "OLT-SSA-02:0/1/1",
+    "onuId": 18,
+    "estado": "online",
+    "rxDbm": -19.8,
+    "txDbm": 2.3,
+    "oltRxDbm": -22.5,
+    "rxUltimaLecturaDbm": -19.8,
+    "ultimoEvento": "ONLINE",
+    "haceMinUltimoEvento": 30240,
+    "flaps24h": 0,
+    "uptimeHoras": 504,
+    "eventos24h": [],
+    "wan": {
+      "estado": "up",
+      "tipo": "PPPoE",
+      "ip": "100.64.20.104",
+      "perfil": "RES_300M",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CLI-1005",
+    "ontSerial": "HWTC1A2B1005",
+    "modelo": "Huawei HG8145X6",
+    "olt": "OLT-SSA-02",
+    "pon": "OLT-SSA-02:0/1/2",
+    "onuId": 9,
+    "estado": "online",
+    "rxDbm": -18.9,
+    "txDbm": 2.4,
+    "oltRxDbm": -21.7,
+    "rxUltimaLecturaDbm": -18.9,
+    "ultimoEvento": "CAMBIO_PERFIL_SUSPENSION",
+    "haceMinUltimoEvento": 7200,
+    "flaps24h": 0,
+    "uptimeHoras": 312,
+    "eventos24h": [],
+    "wan": {
+      "estado": "up",
+      "tipo": "PPPoE",
+      "ip": "100.64.21.57",
+      "perfil": "SUSPENDIDO_PORTAL_PAGO",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CLI-1006",
+    "ontSerial": "HWTC1A2B1006",
+    "modelo": "Huawei EG8145V5",
+    "olt": "OLT-SSA-02",
+    "pon": "OLT-SSA-02:0/1/5",
+    "onuId": 21,
+    "estado": "los",
+    "rxDbm": "sin_lectura",
+    "txDbm": "sin_lectura",
+    "oltRxDbm": "sin_lectura",
+    "rxUltimaLecturaDbm": -20.7,
+    "ultimoEvento": "LOS",
+    "haceMinUltimoEvento": 180,
+    "flaps24h": 1,
+    "uptimeHoras": 0,
+    "eventos24h": [
+      {
+        "evento": "LOS",
+        "haceMin": 180
+      }
+    ],
+    "wan": {
+      "estado": "down",
+      "tipo": "PPPoE",
+      "ip": "",
+      "perfil": "RES_300M",
+      "ultimoError": "Sin enlace óptico"
+    }
+  },
+  {
+    "clienteId": "CLI-1007",
+    "ontSerial": "HWTC1A2B1007",
+    "modelo": "Huawei HG8145X6",
+    "olt": "OLT-SSA-02",
+    "pon": "OLT-SSA-02:0/3/1",
+    "onuId": 5,
+    "estado": "online",
+    "rxDbm": -20.4,
+    "txDbm": 2.2,
+    "oltRxDbm": -23.1,
+    "rxUltimaLecturaDbm": -20.4,
+    "ultimoEvento": "PPPOE_TIMEOUT",
+    "haceMinUltimoEvento": 50,
+    "flaps24h": 0,
+    "uptimeHoras": 912,
+    "eventos24h": [
+      {
+        "evento": "PPPOE_TIMEOUT",
+        "haceMin": 50
+      },
+      {
+        "evento": "PPPOE_REINTENTO_FALLIDO",
+        "haceMin": 45
+      },
+      {
+        "evento": "PPPOE_REINTENTO_FALLIDO",
+        "haceMin": 30
+      }
+    ],
+    "wan": {
+      "estado": "down",
+      "tipo": "PPPoE",
+      "ip": "",
+      "perfil": "RES_500M",
+      "ultimoError": "PPPoE: sin respuesta PADO tras 3 reintentos; proceso WAN de la ONT bloqueado"
+    },
+    "simulacion": {
+      "nota": "Solo para la tool reiniciar_ont. La tool estado_ont NO debe devolver este bloque.",
+      "trasReinicio": {
+        "estado": "online",
+        "ultimoEvento": "PPPOE_UP",
+        "haceMinUltimoEvento": 0,
+        "uptimeHoras": 0,
+        "wan": {
+          "estado": "up",
+          "tipo": "PPPoE",
+          "ip": "100.64.33.71",
+          "perfil": "RES_500M",
+          "ultimoError": ""
+        }
+      }
+    }
+  },
+  {
+    "clienteId": "CLI-1008",
+    "ontSerial": "HWTC1A2B1008",
+    "modelo": "Huawei HG8145X6",
+    "olt": "OLT-STA-01",
+    "pon": "OLT-STA-01:0/1/1",
+    "onuId": 14,
+    "estado": "online",
+    "rxDbm": -21.0,
+    "txDbm": 2.0,
+    "oltRxDbm": -23.8,
+    "rxUltimaLecturaDbm": -21.0,
+    "ultimoEvento": "ONLINE",
+    "haceMinUltimoEvento": 14400,
+    "flaps24h": 0,
+    "uptimeHoras": 240,
+    "eventos24h": [],
+    "wan": {
+      "estado": "up",
+      "tipo": "PPPoE",
+      "ip": "100.64.40.18",
+      "perfil": "RES_500M",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CORP-2001",
+    "ontSerial": "HWTC9C8D2001",
+    "modelo": "Huawei EG8247H5",
+    "olt": "OLT-SSA-01",
+    "pon": "OLT-SSA-01:0/4/1",
+    "onuId": 2,
+    "estado": "los",
+    "rxDbm": "sin_lectura",
+    "txDbm": "sin_lectura",
+    "oltRxDbm": "sin_lectura",
+    "rxUltimaLecturaDbm": -18.2,
+    "ultimoEvento": "LOS",
+    "haceMinUltimoEvento": 35,
+    "flaps24h": 1,
+    "uptimeHoras": 0,
+    "eventos24h": [
+      {
+        "evento": "LOS",
+        "haceMin": 35
+      }
+    ],
+    "wan": {
+      "estado": "down",
+      "modo": "bridge",
+      "vlanServicio": 300,
+      "ip": "",
+      "perfil": "CORP_DED_100M",
+      "ultimoError": "Sin enlace óptico"
+    }
+  },
+  {
+    "clienteId": "CORP-2002",
+    "ontSerial": "HWTC9C8D2002",
+    "modelo": "Huawei EG8247H5",
+    "olt": "OLT-SSA-01",
+    "pon": "OLT-SSA-01:0/4/2",
+    "onuId": 1,
+    "estado": "online",
+    "rxDbm": -17.6,
+    "txDbm": 2.5,
+    "oltRxDbm": -20.9,
+    "rxUltimaLecturaDbm": -17.6,
+    "ultimoEvento": "ONLINE",
+    "haceMinUltimoEvento": 86400,
+    "flaps24h": 0,
+    "uptimeHoras": 1440,
+    "eventos24h": [],
+    "wan": {
+      "estado": "bridge",
+      "modo": "bridge",
+      "vlanServicio": 305,
+      "ip": "",
+      "perfil": "CORP_DED_500M",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CORP-2003",
+    "ontSerial": "HWTC9C8D2003",
+    "modelo": "Huawei EG8247H5",
+    "olt": "OLT-STA-01",
+    "pon": "OLT-STA-01:0/4/1",
+    "onuId": 4,
+    "estado": "online",
+    "rxDbm": -19.1,
+    "txDbm": 2.3,
+    "oltRxDbm": -22.0,
+    "rxUltimaLecturaDbm": -19.1,
+    "ultimoEvento": "ONLINE",
+    "haceMinUltimoEvento": 43200,
+    "flaps24h": 0,
+    "uptimeHoras": 720,
+    "eventos24h": [],
+    "wan": {
+      "estado": "bridge",
+      "modo": "bridge",
+      "vlanServicio": 320,
+      "ip": "",
+      "perfil": "CORP_DED_200M",
+      "ultimoError": ""
+    }
+  },
+  {
+    "clienteId": "CORP-2004",
+    "ontSerial": "HWTC9C8D2004",
+    "modelo": "Huawei EG8247H5",
+    "olt": "OLT-SSA-02",
+    "pon": "OLT-SSA-02:0/4/1",
+    "onuId": 3,
+    "estado": "online",
+    "rxDbm": -20.2,
+    "txDbm": 2.2,
+    "oltRxDbm": -23.0,
+    "rxUltimaLecturaDbm": -20.2,
+    "ultimoEvento": "ONLINE",
+    "haceMinUltimoEvento": 20160,
+    "flaps24h": 0,
+    "uptimeHoras": 336,
+    "eventos24h": [],
+    "wan": {
+      "estado": "bridge",
+      "modo": "bridge",
+      "vlanServicio": 310,
+      "ip": "",
+      "perfil": "CORP_DED_100M",
+      "ultimoError": ""
+    }
+  }
+]

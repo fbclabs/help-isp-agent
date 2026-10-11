@@ -1,0 +1,67 @@
+import bxModules.bxai.models.middleware.AiMiddlewareResult;
+
+/**
+ * Prueba de humo: Gemini (endpoint compatible con OpenAI) + tool calling.
+ * Ejecutar desde la raíz:  boxlang smoke.bxs
+ * Lista cuando: imprime [TOOL] estado_ont( CLI-1001 ) y una respuesta que menciona -19.5 dBm.
+ */
+
+// Leer .env de la carpeta de este script
+env     = {}
+rutaEnv = getDirectoryFromPath( getCurrentTemplatePath() ) & ".env"
+if ( fileExists( rutaEnv ) ) {
+	for ( linea in fileRead( rutaEnv, "utf-8" ).listToArray( char( 10 ) ) ) {
+		linea = trim( linea )
+		if ( !len( linea ) || left( linea, 1 ) == char( 35 ) || !find( "=", linea ) ) continue;
+		env[ trim( listFirst( linea, "=" ) ) ] = trim( listRest( linea, "=" ) )
+	}
+}
+apiKey = env.keyExists( "GEMINI_API_KEY" ) ? env.GEMINI_API_KEY : getSystemSetting( "GEMINI_API_KEY", "" )
+modelo = env.keyExists( "GEMINI_MODEL" ) ? env.GEMINI_MODEL : "gemini-2.5-flash"
+
+println( ".env encontrado: " & ( fileExists( rutaEnv ) ? "SI" : "NO" ) & " | GEMINI_API_KEY cargada: " & ( len( apiKey ) > 10 ? "SI" : "NO" ) & " | Modelo: " & modelo )
+
+pingTool = aiTool(
+	"estado_ont",
+	"Devuelve el estado de la ONT de un cliente",
+	( clienteId ) => {
+		println( "[TOOL] estado_ont( #clienteId# )" )
+		return { clienteId: clienteId, estado: "online", rxDbm: -19.5 }
+	}
+).describeArg( "clienteId", "ID del cliente, formato CLI-1001" )
+
+geminiMw = {
+	beforeLLMCall: ( required struct context ) => {
+		// Gemini (endpoint OpenAI) rechaza "additionalProperties" en el esquema de las tools
+		if ( context.keyExists( "dataPacket" ) && context.dataPacket.keyExists( "tools" ) ) {
+			for ( var t in context.dataPacket.tools ) {
+				if ( isStruct( t ) && t.keyExists( "function" ) && t.function.keyExists( "parameters" ) ) {
+					t.function.parameters.delete( "additionalProperties" );
+				}
+			}
+		}
+		return AiMiddlewareResult.continue();
+	},
+	afterLLMCall: ( required struct context ) => {
+		// Si Gemini devuelve un error, mostrarlo completo
+		if ( context.keyExists( "result" ) && isArray( context.result ) ) {
+			println( "[GEMINI ERROR] " & jsonSerialize( context.result ) );
+		}
+		return AiMiddlewareResult.continue();
+	}
+}
+
+agent = aiAgent(
+	name        : "SmokeTest",
+	instructions: "Responde en español. Usa la tool estado_ont para consultar el estado de un cliente. No inventes datos.",
+	model       : aiModel(
+		provider: "openai-compatible",
+		apiKey  : apiKey,
+		options : { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" },
+		params  : { model: modelo }
+	),
+	tools       : [ pingTool ],
+	middleware  : [ geminiMw ]
+)
+
+println( agent.run( "¿Cómo está la ONT del cliente CLI-1001?" ) )

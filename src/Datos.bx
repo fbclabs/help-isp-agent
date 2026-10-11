@@ -1,0 +1,278 @@
+/**
+ * CAPA 1 - Acceso a los sistemas simulados (JSON de /data) y a los tickets.
+ * No usa IA: solo lee y escribe datos.
+ */
+import bxModules.bxai.models.middleware.AiMiddlewareResult;
+
+class {
+
+	function init() {
+		variables.raiz    = resolverRaiz()
+		variables.dataDir = variables.raiz & "data/"
+
+		variables.catalogo   = leer( "catalogo_fallas.json" )
+		variables.crm        = leer( "crm_clientes.json" )
+		variables.oss        = indexar( leer( "oss_ont.json" ) )
+		variables.noc        = leer( "noc_incidentes.json" )
+		variables.bss        = leer( "bss_facturacion.json" )
+		variables.cuentas    = indexar( variables.bss.cuentas )
+		variables.acs        = indexar( leer( "acs_wifi.json" ).equipos )
+		variables.corp       = indexar( leer( "corp_enlaces.json" ).enlaces )
+		variables.rutaTicket = variables.dataDir & "tickets.json"
+		variables.env        = leerEnv()
+		return this
+	}
+
+	/** Lee el archivo .env de la raíz (KEY=VALOR). */
+	private struct function leerEnv() {
+		var r    = {}
+		var ruta = variables.raiz & ".env"
+		if ( !fileExists( ruta ) ) return r
+		for ( var linea in fileRead( ruta, "utf-8" ).listToArray( char( 10 ) ) ) {
+			linea = trim( linea )
+			if ( !len( linea ) || left( linea, 1 ) == char( 35 ) || !find( "=", linea ) ) continue;
+			r[ trim( listFirst( linea, "=" ) ) ] = trim( listRest( linea, "=" ) )
+		}
+		return r
+	}
+
+	/** Configuración: primero variable de entorno del sistema, luego .env, luego el valor por defecto. */
+	string function cfg( required string clave, string defecto = "" ) {
+		var v = getSystemSetting( clave, "" )
+		if ( len( v ) ) return v
+		return variables.env.keyExists( clave ) && len( variables.env[ clave ] ) ? variables.env[ clave ] : defecto
+	}
+
+	/** Middleware de compatibilidad con Gemini (limpia el esquema de tools y muestra errores). */
+	struct function middlewareGemini() {
+		return {
+			beforeLLMCall: ( required struct context ) => {
+				// Gemini (endpoint OpenAI) rechaza "additionalProperties" en el esquema de las tools
+				if ( context.keyExists( "dataPacket" ) && context.dataPacket.keyExists( "tools" ) ) {
+					for ( var t in context.dataPacket.tools ) {
+						if ( isStruct( t ) && t.keyExists( "function" ) && t.function.keyExists( "parameters" ) ) {
+							t.function.parameters.delete( "additionalProperties" );
+						}
+					}
+				}
+				return AiMiddlewareResult.continue();
+			},
+			afterLLMCall: ( required struct context ) => {
+				// Si Gemini devuelve un error, mostrarlo completo
+				if ( context.keyExists( "result" ) && isArray( context.result ) ) {
+					println( "[GEMINI ERROR] " & jsonSerialize( context.result ) );
+				}
+				return AiMiddlewareResult.continue();
+			}
+		}
+	}
+
+	/** Modelo Gemini vía su endpoint compatible con OpenAI (el proveedor "gemini" de bx-ai 3.5 no envía bien las tools). */
+	function modelo() {
+		return aiModel(
+			provider: "openai-compatible",
+			apiKey  : cfg( "GEMINI_API_KEY" ),
+			options : { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" },
+			params  : { model: cfg( "GEMINI_MODEL", "gemini-2.5-flash" ) }
+		)
+	}
+
+	// ---------- utilidades ----------
+
+	private string function resolverRaiz() {
+		// Carpeta src/ de este archivo -> raíz del repo
+		var desdeClase = getDirectoryFromPath( getCurrentTemplatePath() ) & "../"
+		if ( directoryExists( desdeClase & "data" ) ) {
+			return desdeClase
+		}
+		// Alternativa: relativo al script que se ejecutó (src/main.bxs o src/telegram.bxs)
+		return expandPath( "../" )
+	}
+
+	function getRaiz() {
+		return variables.raiz
+	}
+
+	private any function leer( required string archivo ) {
+		return jsonDeserialize( fileRead( variables.dataDir & archivo, "utf-8" ) )
+	}
+
+	private struct function indexar( required array lista ) {
+		var mapa = {}
+		for ( var item in lista ) {
+			mapa[ item.clienteId ] = item
+		}
+		return mapa
+	}
+
+	function ahora() {
+		return dateTimeFormat( now(), "yyyy-MM-dd HH:mm" )
+	}
+
+	function enMinutos( required numeric minutos ) {
+		return dateTimeFormat( dateAdd( "n", minutos, now() ), "yyyy-MM-dd HH:mm" )
+	}
+
+	// ---------- CRM ----------
+
+	/** Busca por DUI, NIT o número de factura. Devuelve {} si no existe. */
+	struct function buscarCliente( required string dato ) {
+		var d = uCase( trim( dato ) )
+		for ( var c in variables.crm ) {
+			if ( c.keyExists( "dui" ) && uCase( c.dui ) == d ) return c
+			if ( c.keyExists( "nit" ) && uCase( c.nit ) == d ) return c
+		}
+		for ( var cta in variables.bss.cuentas ) {
+			for ( var f in cta.facturas ) {
+				if ( uCase( f.numero ) == d ) {
+					return cliente( cta.clienteId )
+				}
+			}
+		}
+		return {}
+	}
+
+	struct function cliente( required string clienteId ) {
+		for ( var c in variables.crm ) {
+			if ( c.clienteId == clienteId ) return c
+		}
+		return {}
+	}
+
+	// ---------- OSS / NOC / BSS / ACS / Corporativo ----------
+
+	struct function ont( required string clienteId ) {
+		if ( !variables.oss.keyExists( clienteId ) ) return {}
+		var copia = duplicate( variables.oss[ clienteId ] )
+		copia.delete( "simulacion" )
+		return copia
+	}
+
+	/** Aplica el estado "trasReinicio" (solo si existe) y devuelve la ONT actualizada. */
+	struct function reiniciarOnt( required string clienteId ) {
+		var o = variables.oss[ clienteId ]
+		if ( o.keyExists( "simulacion" ) && o.simulacion.keyExists( "trasReinicio" ) ) {
+			for ( var k in o.simulacion.trasReinicio ) {
+				o[ k ] = o.simulacion.trasReinicio[ k ]
+			}
+		} else {
+			o.ultimoEvento        = "REINICIO_REMOTO"
+			o.haceMinUltimoEvento = 0
+		}
+		return ont( clienteId )
+	}
+
+	struct function incidentesPon( required string pon ) {
+		var lista = []
+		for ( var i in variables.noc.incidentes ) {
+			if ( i.pon != pon ) continue;
+			var x = duplicate( i )
+			if ( x.keyExists( "inicioHaceMin" ) ) x.inicio = enMinutos( -x.inicioHaceMin )
+			if ( x.keyExists( "etaEnMin" ) ) x.eta = enMinutos( x.etaEnMin )
+			if ( x.keyExists( "resueltoHaceMin" ) ) x.resuelto = enMinutos( -x.resueltoHaceMin )
+			if ( x.keyExists( "inicioEnMin" ) ) x.inicioProgramado = enMinutos( x.inicioEnMin )
+			lista.append( x )
+		}
+		var resumen = {}
+		for ( var p in variables.noc.pons ) {
+			if ( p.pon == pon ) resumen = p
+		}
+		return { pon: pon, horaConsulta: ahora(), resumenPon: resumen, incidentes: lista }
+	}
+
+	struct function cuenta( required string clienteId ) {
+		if ( !variables.cuentas.keyExists( clienteId ) ) return {}
+		var c = duplicate( variables.cuentas[ clienteId ] )
+		c.canalesPago      = variables.bss.canalesPago
+		c.reglaReconexion  = variables.bss.reglaReconexion
+		return c
+	}
+
+	struct function wifi( required string clienteId ) {
+		return variables.acs.keyExists( clienteId ) ? duplicate( variables.acs[ clienteId ] ) : {}
+	}
+
+	struct function enlace( required string clienteId ) {
+		if ( !variables.corp.keyExists( clienteId ) ) return {}
+		var e = duplicate( variables.corp[ clienteId ] )
+		e.delete( "simulacionPortal" )
+		return e
+	}
+
+	/** Solo para el portal (CAPA 3). */
+	struct function simulacionPortal( required string clienteId ) {
+		return variables.corp.keyExists( clienteId ) ? duplicate( variables.corp[ clienteId ].simulacionPortal ) : {}
+	}
+
+	// ---------- Base de conocimiento ----------
+
+	array function buscarKb( required string consulta ) {
+		var q          = lCase( consulta )
+		var resultados = []
+		for ( var f in variables.catalogo.fallas ) {
+			var puntos = 0
+			if ( q contains lCase( f.id ) ) puntos += 10
+			for ( var p in f.palabrasClave ) {
+				if ( q contains lCase( p ) ) puntos++
+			}
+			if ( puntos > 0 ) {
+				var r = duplicate( f )
+				r.puntos = puntos
+				resultados.append( r )
+			}
+		}
+		resultados.sort( ( a, b ) => b.puntos - a.puntos )
+		return resultados.len() > 3 ? resultados.slice( 1, 3 ) : resultados
+	}
+
+	struct function umbrales() {
+		return variables.catalogo.umbrales
+	}
+
+	array function areas() {
+		return variables.catalogo.areas.map( ( a ) => a.id )
+	}
+
+	// ---------- Tickets ----------
+
+	array function tickets() {
+		return jsonDeserialize( fileRead( variables.rutaTicket, "utf-8" ) )
+	}
+
+	void function guardarTickets( required array lista ) {
+		fileWrite( variables.rutaTicket, jsonSerialize( data = lista, pretty = true ), "utf-8" )
+	}
+
+	string function nuevoTicketId() {
+		var n = tickets().len() + 1
+		return "TKT-" & numberFormat( n, "000000" )
+	}
+
+	struct function ticket( required string ticketId ) {
+		for ( var t in tickets() ) {
+			if ( uCase( t.ticketId ) == uCase( trim( ticketId ) ) ) return t
+		}
+		return {}
+	}
+
+	struct function ticketAbierto( required string clienteId ) {
+		for ( var t in tickets() ) {
+			if ( t.clienteId == clienteId && t.estado != "cerrado" ) return t
+		}
+		return {}
+	}
+
+	/** Reemplaza el ticket con el mismo ticketId y guarda. */
+	void function guardarTicket( required struct t ) {
+		var lista  = tickets()
+		var existe = false
+		for ( var i = 1; i <= lista.len(); i++ ) {
+			if ( lista[ i ].ticketId == t.ticketId ) {
+				lista[ i ] = t
+				existe     = true
+			}
+		}
+		if ( !existe ) lista.append( t )
+		guardarTickets( lista )
+	}
+}

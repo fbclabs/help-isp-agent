@@ -1,0 +1,62 @@
+{
+  "nota": "Los tiempos son relativos al momento de la consulta: inicioHaceMin (minutos atrás) y etaEnMin (minutos hacia adelante). La tool calcula la hora real con now().",
+  "incidentes": [
+    {
+      "incidenteId": "INC-2026-0451",
+      "tipo": "masiva",
+      "estado": "activo",
+      "olt": "OLT-SSA-01",
+      "pon": "OLT-SSA-01:0/1/3",
+      "causa": "Corte de cable feeder de 48 hilos por trabajos de excavación de terceros en la zona de la Col. Escalón",
+      "ontsAfectadas": 37,
+      "inicioHaceMin": 120,
+      "etaEnMin": 150,
+      "areaResponsable": "NOC",
+      "cuadrilla": "CUA-07 en sitio, fusionando",
+      "mensajeCliente": "Hay una falla masiva por corte de fibra en su zona. Una cuadrilla ya está reparando."
+    },
+    {
+      "incidenteId": "INC-2026-0447",
+      "tipo": "masiva",
+      "estado": "resuelto",
+      "olt": "OLT-SSA-02",
+      "pon": "OLT-SSA-02:0/1/5",
+      "causa": "Splitter 1:8 dañado en caja NAP-215",
+      "ontsAfectadas": 6,
+      "inicioHaceMin": 4500,
+      "resueltoHaceMin": 4320,
+      "areaResponsable": "NOC",
+      "cuadrilla": "CUA-03",
+      "mensajeCliente": "Incidente resuelto."
+    },
+    {
+      "incidenteId": "MNT-2026-0032",
+      "tipo": "mantenimiento",
+      "estado": "programado",
+      "olt": "OLT-SSA-03",
+      "pon": "OLT-SSA-03:0/1/1",
+      "causa": "Migración de tarjeta de servicio en la OLT",
+      "ontsAfectadas": 40,
+      "inicioEnMin": 2880,
+      "duracionMin": 240,
+      "areaResponsable": "NOC",
+      "cuadrilla": "NOC turno noche",
+      "mensajeCliente": "Mantenimiento programado de 00:00 a 04:00."
+    }
+  ],
+  "pons": [
+    { "pon": "OLT-SSA-01:0/1/3", "totalOnts": 42, "online": 5, "los": 37, "offline": 0 },
+    { "pon": "OLT-SSA-01:0/2/1", "totalOnts": 36, "online": 35, "los": 0, "offline": 1 },
+    { "pon": "OLT-SSA-01:0/2/4", "totalOnts": 40, "online": 40, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-01:0/4/1", "totalOnts": 8, "online": 7, "los": 1, "offline": 0 },
+    { "pon": "OLT-SSA-01:0/4/2", "totalOnts": 8, "online": 8, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-02:0/1/1", "totalOnts": 30, "online": 30, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-02:0/1/2", "totalOnts": 33, "online": 33, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-02:0/1/5", "totalOnts": 28, "online": 27, "los": 1, "offline": 0 },
+    { "pon": "OLT-SSA-02:0/3/1", "totalOnts": 35, "online": 35, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-02:0/4/1", "totalOnts": 8, "online": 8, "los": 0, "offline": 0 },
+    { "pon": "OLT-SSA-03:0/1/1", "totalOnts": 40, "online": 40, "los": 0, "offline": 0 },
+    { "pon": "OLT-STA-01:0/1/1", "totalOnts": 25, "online": 25, "los": 0, "offline": 0 },
+    { "pon": "OLT-STA-01:0/4/1", "totalOnts": 6, "online": 6, "los": 0, "offline": 0 }
+  ]
+}

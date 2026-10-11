@@ -1,0 +1,415 @@
+{
+  "version": "1.0",
+  "nota": "Datos ficticios para el Hackathon BoxLang + AI. ISP de fibra FTTH (GPON clase B+).",
+  "umbrales": {
+    "validadoPorFernando": true,
+    "nota": "VALIDAR: umbrales operativos propuestos para GPON clase B+ (ITU-T G.984.2). Ajustar antes de la demo.",
+    "ontRxDbm": {
+      "saturacion": "mayor a -8",
+      "optimo": "-8 a -23",
+      "aceptable": "-23 a -25",
+      "degradado": "-25 a -27",
+      "critico": "menor a -27 (bajo la sensibilidad B+ de la ONT: LOS o intermitencia)"
+    },
+    "oltRxDbm": {
+      "normal": "mayor o igual a -26",
+      "degradado": "-26 a -28",
+      "critico": "menor a -28 (bajo la sensibilidad B+ de la OLT)"
+    },
+    "ontTxDbm": {
+      "normal": "0.5 a 5",
+      "fueraDeRango": "menor a 0.5 o mayor a 5 (posible falla del láser de la ONT)"
+    },
+    "flapsPor24h": {
+      "normal": "0 a 2",
+      "intermitente": "3 o más"
+    },
+    "masivaEnPon": {
+      "regla": "4 o más ONT en LOS (o dying gasp) en el mismo PON al mismo tiempo, o un incidente activo del NOC sobre ese PON"
+    },
+    "wifi": {
+      "utilizacion24SaturadaPct": "70 o más",
+      "rssiDebilDbm": "-75 o menos",
+      "redesVecinasMismoCanalAlta": "5 o más"
+    },
+    "corporativo": {
+      "utilizacionP95SaturadaPct": "90 o más",
+      "latenciaAltaMs": "mayor a 60 hacia Internet",
+      "perdidaAltaPct": "mayor a 1"
+    }
+  },
+  "areas": [
+    { "id": "NOC", "descripcion": "Centro de operaciones de red: masivas, OLT, red troncal, ventanas de mantenimiento" },
+    { "id": "Soporte", "descripcion": "Soporte técnico residencial nivel 1-2: ONT, energía, sesión WAN, reinicios remotos" },
+    { "id": "Soporte_Hogar", "descripcion": "WiFi y red interna del cliente: canales, cobertura, dispositivos" },
+    { "id": "Campo", "descripcion": "Técnicos de campo: fibra drop, conectores, empalmes, cambio de equipos" },
+    { "id": "Facturacion", "descripcion": "Pagos, mora, suspensión y reconexión" },
+    { "id": "Soporte_Corporativo", "descripcion": "Clientes empresariales: enlace dedicado, CPE, VLAN, BGP, SLA" }
+  ],
+  "prioridades": [
+    { "id": "P1", "descripcion": "Crítica: enlace corporativo caído o en riesgo de incumplir SLA" },
+    { "id": "P2", "descripcion": "Alta: cliente residencial sin servicio" },
+    { "id": "P3", "descripcion": "Media: servicio degradado o intermitente" },
+    { "id": "P4", "descripcion": "Baja: consulta, WiFi o configuración" }
+  ],
+  "fallas": [
+    {
+      "id": "R01",
+      "segmento": "residencial",
+      "nombre": "Caída masiva en el PON (corte de fibra troncal o feeder)",
+      "sintomasCliente": ["No tengo internet", "La luz del aparato está roja", "A mis vecinos tampoco les funciona"],
+      "indicadores": [
+        "ONT en estado los",
+        "Incidente activo del NOC sobre el PON del cliente",
+        "Muchas ONT del mismo PON en LOS al mismo tiempo"
+      ],
+      "pruebasCaseras": [],
+      "resolucion": "Informar la masiva, el número de incidente y la hora estimada de restablecimiento (ETA). No abrir ticket individual ni agendar visita. Vincular el caso al incidente y avisar si el servicio no vuelve después de la ETA.",
+      "areaResponsable": "NOC",
+      "requiereVisita": false,
+      "prioridad": "P2",
+      "palabrasClave": ["masiva", "corte", "fibra", "los", "vecinos", "zona", "eta"]
+    },
+    {
+      "id": "R02",
+      "segmento": "residencial",
+      "nombre": "Corte de energía en casa del cliente (dying gasp)",
+      "sintomasCliente": ["No tengo internet", "El aparato está apagado", "Se fue la luz y no regresó el internet"],
+      "indicadores": [
+        "ONT offline con último evento DYING_GASP",
+        "Las demás ONT del PON están en línea",
+        "Sin incidente activo en el PON"
+      ],
+      "pruebasCaseras": [
+        "Verificar si la ONT tiene alguna luz encendida",
+        "Revisar que el adaptador de corriente esté bien conectado a la ONT y al tomacorriente",
+        "Probar la ONT en otro tomacorriente o revisar el breaker",
+        "Si usa regleta o UPS, conectar directo a la pared"
+      ],
+      "resolucion": "Si la ONT enciende, verificar que regrese a online. Si no enciende en ningún tomacorriente, el adaptador o la ONT está dañado: crear ticket y agendar visita para reemplazo.",
+      "areaResponsable": "Soporte",
+      "requiereVisita": false,
+      "prioridad": "P2",
+      "palabrasClave": ["dying gasp", "energia", "luz", "apagado", "adaptador", "corriente"]
+    },
+    {
+      "id": "R03",
+      "segmento": "residencial",
+      "nombre": "Señal óptica degradada (conector sucio, curvatura o empalme dañado)",
+      "sintomasCliente": ["El internet se va a cada rato", "Se desconecta y vuelve solo", "Está muy inestable"],
+      "indicadores": [
+        "ONT online pero Rx por debajo de -27 dBm (crítico) o entre -25 y -27 (degradado)",
+        "Rx en la OLT degradado",
+        "3 o más flaps (caídas de enlace óptico) en 24 h",
+        "Sin incidente en el PON y demás ONT normales"
+      ],
+      "pruebasCaseras": [
+        "Revisar que el cable de fibra (delgado, amarillo o blanco) entre la roseta y la ONT no esté doblado, pisado ni enrollado apretado",
+        "Verificar que el conector verde o azul esté bien insertado en la ONT (sin desconectarlo varias veces)",
+        "No limpiar ni soplar el conector: se ensucia más"
+      ],
+      "resolucion": "Si la prueba casera no corrige el Rx, crear ticket y agendar visita de Campo para limpieza de conectores, cambio de patchcord o revisión del drop.",
+      "areaResponsable": "Campo",
+      "requiereVisita": true,
+      "prioridad": "P3",
+      "palabrasClave": ["intermitente", "inestable", "se va", "rx", "potencia", "dbm", "conector", "curvatura", "flap"]
+    },
+    {
+      "id": "R04",
+      "segmento": "residencial",
+      "nombre": "Pérdida de señal individual (drop cortado o desconectado)",
+      "sintomasCliente": ["No tengo internet", "La luz LOS está roja", "Se cayó un cable del poste"],
+      "indicadores": [
+        "ONT en estado los",
+        "Solo esta ONT en LOS en su PON",
+        "Sin incidente activo en el PON"
+      ],
+      "pruebasCaseras": [
+        "Confirmar que la luz LOS o PON de la ONT está roja o parpadeando",
+        "Revisar que el cable de fibra esté conectado a la ONT y a la roseta",
+        "Preguntar si hubo obras, poda de árboles o un cable caído cerca de la casa"
+      ],
+      "resolucion": "Crear ticket y agendar visita de Campo con prioridad alta para revisar y reparar el drop.",
+      "areaResponsable": "Campo",
+      "requiereVisita": true,
+      "prioridad": "P2",
+      "palabrasClave": ["los", "luz roja", "sin señal", "cable", "poste", "drop", "cortado"]
+    },
+    {
+      "id": "R05",
+      "segmento": "residencial",
+      "nombre": "Servicio suspendido por mora",
+      "sintomasCliente": ["No me abren las páginas", "Me sale una página del proveedor", "No tengo internet"],
+      "indicadores": [
+        "Estado de facturación suspendido con saldo pendiente",
+        "ONT online con Rx normal",
+        "Perfil WAN de suspensión (portal cautivo de pago)"
+      ],
+      "pruebasCaseras": [],
+      "resolucion": "Informar el saldo, los días de mora y los canales de pago. La reconexión es automática hasta 30 minutos después del pago. No crear ticket técnico ni agendar visita.",
+      "areaResponsable": "Facturacion",
+      "requiereVisita": false,
+      "prioridad": "P4",
+      "palabrasClave": ["mora", "pago", "suspendido", "factura", "saldo", "corte por pago"]
+    },
+    {
+      "id": "R06",
+      "segmento": "residencial",
+      "nombre": "WiFi 2.4 GHz saturado o con interferencia",
+      "sintomasCliente": ["El internet está lento en el celular", "En la noche no carga nada", "Por cable sí funciona bien"],
+      "indicadores": [
+        "ONT online, Rx normal y prueba de velocidad de la ONT cerca del plan",
+        "Utilización de la banda 2.4 GHz de 70% o más",
+        "Muchas redes vecinas en el mismo canal",
+        "Muchos dispositivos conectados en 2.4 GHz y pocos en 5 GHz"
+      ],
+      "pruebasCaseras": [
+        "Hacer una prueba de velocidad por cable o junto al router en 5 GHz",
+        "Conectar celulares y laptops a la red de 5 GHz",
+        "Dejar en 2.4 GHz solo los equipos que no soportan 5 GHz (cámaras, IoT)"
+      ],
+      "resolucion": "Recomendar cambio de canal de 2.4 GHz (1 u 11) y ancho de 20 MHz, y mover dispositivos a 5 GHz. Si persiste, ticket a Soporte_Hogar para optimización remota.",
+      "areaResponsable": "Soporte_Hogar",
+      "requiereVisita": false,
+      "prioridad": "P4",
+      "palabrasClave": ["lento", "wifi", "2.4", "canal", "interferencia", "celular", "noche", "saturado"]
+    },
+    {
+      "id": "R07",
+      "segmento": "residencial",
+      "nombre": "Cobertura WiFi insuficiente en parte de la casa",
+      "sintomasCliente": ["En el cuarto de arriba no llega el internet", "Se corta la videollamada en un cuarto", "Cerca del router sí funciona"],
+      "indicadores": [
+        "ONT online, Rx normal y prueba de velocidad de la ONT cerca del plan",
+        "Utilización de WiFi normal",
+        "Dispositivos con RSSI de -75 dBm o peor"
+      ],
+      "pruebasCaseras": [
+        "Probar la velocidad junto al router y luego en el cuarto con problema",
+        "Verificar que el router no esté dentro de un mueble, en el suelo o detrás de la TV",
+        "Reubicar el router en un punto central y elevado"
+      ],
+      "resolucion": "Recomendar reubicar el router, cablear el cuarto o instalar un extensor mesh. Ticket a Soporte_Hogar solo si el cliente pide el mesh.",
+      "areaResponsable": "Soporte_Hogar",
+      "requiereVisita": false,
+      "prioridad": "P4",
+      "palabrasClave": ["cobertura", "cuarto", "señal debil", "segundo piso", "mesh", "extensor", "rssi"]
+    },
+    {
+      "id": "R08",
+      "segmento": "residencial",
+      "nombre": "ONT sin sesión WAN (PPPoE caído o ONT colgada)",
+      "sintomasCliente": ["No tengo internet", "La luz PON está verde pero la de Internet está apagada", "El WiFi aparece pero sin internet"],
+      "indicadores": [
+        "ONT online y Rx normal",
+        "WAN en estado down, sin IP",
+        "Último evento de timeout de PPPoE o DHCP",
+        "Facturación al día (no es suspensión)"
+      ],
+      "pruebasCaseras": [
+        "Apagar la ONT 30 segundos y volver a encenderla"
+      ],
+      "resolucion": "Reinicio remoto de la ONT (requiere aprobación humana). Si después del reinicio la WAN sigue caída, crear ticket y escalar al NOC (BRAS/RADIUS).",
+      "areaResponsable": "Soporte",
+      "requiereVisita": false,
+      "prioridad": "P2",
+      "palabrasClave": ["pppoe", "wan", "sin ip", "colgada", "reiniciar", "luz internet apagada"]
+    },
+    {
+      "id": "R09",
+      "segmento": "residencial",
+      "nombre": "ONT con falla de hardware",
+      "sintomasCliente": ["El aparato se reinicia solo", "Las luces parpadean raro", "El internet se va y vuelve cada rato"],
+      "indicadores": [
+        "Reinicios espontáneos (uptime muy bajo y repetido)",
+        "Tx de la ONT fuera de rango",
+        "Rx normal y sin incidente en el PON"
+      ],
+      "pruebasCaseras": [
+        "Verificar que la ONT tenga ventilación y no esté caliente",
+        "Conectarla directo a la pared, sin regleta"
+      ],
+      "resolucion": "Crear ticket y agendar visita de Campo para cambio de ONT.",
+      "areaResponsable": "Campo",
+      "requiereVisita": true,
+      "prioridad": "P3",
+      "palabrasClave": ["se reinicia", "hardware", "tx", "equipo dañado", "cambio de ont"]
+    },
+    {
+      "id": "R10",
+      "segmento": "residencial",
+      "nombre": "Corte de energía en la zona (varios dying gasp en el PON)",
+      "sintomasCliente": ["No tengo internet", "Se fue la luz en la colonia"],
+      "indicadores": [
+        "ONT offline con último evento DYING_GASP",
+        "4 o más ONT del mismo PON con dying gasp al mismo tiempo"
+      ],
+      "pruebasCaseras": [
+        "Confirmar si hay energía eléctrica en la casa"
+      ],
+      "resolucion": "Informar que es un corte de energía de la zona, ajeno a la red de fibra. El servicio vuelve solo al regresar la energía. No agendar visita.",
+      "areaResponsable": "NOC",
+      "requiereVisita": false,
+      "prioridad": "P3",
+      "palabrasClave": ["apagon", "energia", "colonia", "dying gasp", "zona"]
+    },
+    {
+      "id": "R11",
+      "segmento": "residencial",
+      "nombre": "Mantenimiento programado en el PON",
+      "sintomasCliente": ["No tengo internet en la madrugada", "Se cayó el internet a la hora del mantenimiento"],
+      "indicadores": [
+        "Ventana de mantenimiento activa sobre el PON del cliente",
+        "ONT en LOS u offline durante la ventana"
+      ],
+      "pruebasCaseras": [],
+      "resolucion": "Informar la ventana de mantenimiento y la hora de fin. No abrir ticket.",
+      "areaResponsable": "NOC",
+      "requiereVisita": false,
+      "prioridad": "P4",
+      "palabrasClave": ["mantenimiento", "programado", "ventana", "madrugada"]
+    },
+    {
+      "id": "C01",
+      "segmento": "corporativo",
+      "nombre": "Enlace dedicado caído por corte de fibra en la última milla",
+      "sintomasCliente": ["Se cayó el enlace", "Toda la oficina está sin internet", "El router no levanta la WAN"],
+      "indicadores": [
+        "ONT del enlace en estado los",
+        "Interfaz WAN del CPE en down",
+        "Ping al gateway del ISP con 100% de pérdida",
+        "Sin incidente activo en el PON"
+      ],
+      "pruebasCaseras": [
+        "Confirmar que la ONT y el CPE tienen energía (descartar dying gasp)",
+        "Revisar la luz LOS de la ONT",
+        "Correr las pruebas del portal corporativo"
+      ],
+      "resolucion": "Crear ticket P1, escalar al NOC y agendar visita urgente de Campo. Informar el reloj del SLA (tiempo de restauración comprometido).",
+      "areaResponsable": "Campo",
+      "requiereVisita": true,
+      "prioridad": "P1",
+      "palabrasClave": ["enlace caido", "dedicado", "oficina", "los", "sla", "fibra"]
+    },
+    {
+      "id": "C02",
+      "segmento": "corporativo",
+      "nombre": "Sesión BGP caída con el enlace físico arriba",
+      "sintomasCliente": ["Tenemos enlace pero no salimos a Internet", "El router ve la WAN pero no hay navegación"],
+      "indicadores": [
+        "ONT online y Rx normal",
+        "Interfaz WAN del CPE up y ping al gateway del ISP correcto",
+        "Sesión BGP en estado Active o Idle, 0 prefijos recibidos",
+        "Cambio reciente de configuración en el CPE del cliente"
+      ],
+      "pruebasCaseras": [
+        "Correr ping al gateway y a Internet desde el portal",
+        "Revisar el estado BGP del CPE",
+        "Confirmar si hubo cambios recientes en el router o firewall del cliente"
+      ],
+      "resolucion": "Verificar con el área de TI del cliente la configuración BGP del CPE (ASN, IP del vecino, contraseña MD5, filtros o ACL hacia TCP/179). Ticket a Soporte_Corporativo con la evidencia. No requiere visita.",
+      "areaResponsable": "Soporte_Corporativo",
+      "requiereVisita": false,
+      "prioridad": "P1",
+      "palabrasClave": ["bgp", "sesion", "prefijos", "asn", "vecino", "enrutamiento"]
+    },
+    {
+      "id": "C03",
+      "segmento": "corporativo",
+      "nombre": "VLAN de servicio mal configurada en el CPE",
+      "sintomasCliente": ["Cambiamos el router y ya no hay internet", "La WAN está arriba pero no responde el gateway"],
+      "indicadores": [
+        "ONT online y Rx normal",
+        "Interfaz WAN del CPE up",
+        "VLAN configurada en el CPE distinta de la VLAN de servicio",
+        "Ping al gateway con 100% de pérdida y ARP incompleto",
+        "0 MAC aprendidas en la VLAN de servicio"
+      ],
+      "pruebasCaseras": [
+        "Revisar en el CPE la subinterfaz WAN y su VLAN",
+        "Correr ping al gateway desde el portal"
+      ],
+      "resolucion": "Guiar al área de TI del cliente para configurar la subinterfaz WAN con la VLAN de servicio correcta. Ticket a Soporte_Corporativo. No requiere visita.",
+      "areaResponsable": "Soporte_Corporativo",
+      "requiereVisita": false,
+      "prioridad": "P1",
+      "palabrasClave": ["vlan", "cambio de router", "subinterfaz", "arp", "gateway", "tag"]
+    },
+    {
+      "id": "C04",
+      "segmento": "corporativo",
+      "nombre": "Saturación del enlace (latencia y pérdida por uso alto)",
+      "sintomasCliente": ["El internet está lento en la oficina", "Las videollamadas se cortan en la mañana", "El sistema en la nube va muy lento"],
+      "indicadores": [
+        "ONT online, Rx normal, sin errores CRC",
+        "Utilización p95 del enlace de 90% o más",
+        "Latencia y pérdida altas en horas pico",
+        "Descartes de salida (output drops) en la interfaz WAN"
+      ],
+      "pruebasCaseras": [
+        "Correr ping y traceroute desde el portal en hora pico",
+        "Identificar qué equipos o aplicaciones consumen más (respaldos, actualizaciones, streaming)"
+      ],
+      "resolucion": "Recomendar QoS para priorizar voz y video, mover respaldos fuera de horario y evaluar ampliación del ancho de banda. Ticket a Soporte_Corporativo con la evidencia de utilización.",
+      "areaResponsable": "Soporte_Corporativo",
+      "requiereVisita": false,
+      "prioridad": "P3",
+      "palabrasClave": ["lento", "latencia", "perdida", "saturado", "utilizacion", "ancho de banda", "qos"]
+    },
+    {
+      "id": "C05",
+      "segmento": "corporativo",
+      "nombre": "Señal óptica degradada en enlace corporativo",
+      "sintomasCliente": ["El enlace se cae y vuelve", "Tenemos cortes cortos varias veces al día"],
+      "indicadores": [
+        "Rx de la ONT del enlace por debajo de -25 dBm",
+        "3 o más flaps en 24 h",
+        "Errores CRC en la interfaz WAN"
+      ],
+      "pruebasCaseras": [
+        "Correr las pruebas del portal y revisar la potencia óptica",
+        "Revisar que el patchcord de fibra no esté doblado en el rack"
+      ],
+      "resolucion": "Crear ticket y agendar visita de Campo para medición OTDR, limpieza de conectores o cambio de patchcord.",
+      "areaResponsable": "Campo",
+      "requiereVisita": true,
+      "prioridad": "P1",
+      "palabrasClave": ["intermitente", "crc", "flap", "rx", "potencia", "enlace"]
+    },
+    {
+      "id": "C06",
+      "segmento": "corporativo",
+      "nombre": "Equipos del cliente sin energía en el sitio (dying gasp corporativo)",
+      "sintomasCliente": ["Se cayó el enlace después de un apagón", "El rack se quedó sin energía"],
+      "indicadores": [
+        "ONT del enlace offline con último evento DYING_GASP",
+        "Interfaz WAN del CPE sin respuesta de gestión"
+      ],
+      "pruebasCaseras": [
+        "Revisar la energía del rack, el UPS y el breaker",
+        "Confirmar que la ONT y el CPE están encendidos"
+      ],
+      "resolucion": "Guiar al cliente para restablecer la energía. Si los equipos no encienden, ticket a Soporte_Corporativo y visita.",
+      "areaResponsable": "Soporte_Corporativo",
+      "requiereVisita": false,
+      "prioridad": "P1",
+      "palabrasClave": ["energia", "ups", "rack", "apagon", "dying gasp"]
+    },
+    {
+      "id": "C07",
+      "segmento": "corporativo",
+      "nombre": "Servicio corporativo suspendido por mora",
+      "sintomasCliente": ["Nos cortaron el servicio", "No hay navegación pero el enlace está arriba"],
+      "indicadores": [
+        "Estado de facturación suspendido con saldo pendiente",
+        "Enlace físico y lógico normales"
+      ],
+      "pruebasCaseras": [],
+      "resolucion": "Informar el saldo y escalar a Facturacion (gestor de cuenta corporativa) para acuerdo de pago y reconexión.",
+      "areaResponsable": "Facturacion",
+      "requiereVisita": false,
+      "prioridad": "P2",
+      "palabrasClave": ["mora", "suspendido", "pago", "corporativo", "saldo"]
+    }
+  ]
+}

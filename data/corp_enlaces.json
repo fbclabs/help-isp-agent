@@ -1,0 +1,421 @@
+{
+  "nota": "Enlaces corporativos ficticios. IPs de rangos de documentación (RFC 5737) y ASN de documentación/privados.",
+  "enlaces": [
+    {
+      "clienteId": "CORP-2001",
+      "enlaceId": "ENL-2001",
+      "servicio": "Internet Dedicado",
+      "anchoBandaMbps": 100,
+      "estadoEnlace": "down",
+      "capa2": {
+        "vlanServicio": 300,
+        "vlanConfiguradaCpe": 300,
+        "macAprendidasVlanServicio": 0
+      },
+      "capa3": {
+        "enrutamiento": "estatico",
+        "ipWanIsp": "203.0.113.1/30",
+        "ipWanCliente": "203.0.113.2/30",
+        "prefijoLan": "198.51.100.0/29"
+      },
+      "bgp": {
+        "habilitado": false
+      },
+      "cpe": {
+        "modelo": "Router de borde del cliente",
+        "administradoPor": "ISP",
+        "ipGestion": "10.20.1.2",
+        "alcanzableGestion": false,
+        "ultimoCambioConfigHaceMin": 129600,
+        "ultimoCambioDescripcion": "Sin cambios recientes",
+        "interfaces": [
+          {
+            "nombre": "ether1-WAN",
+            "descripcion": "Hacia ONT del ISP",
+            "estado": "down",
+            "velocidad": "sin enlace",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": 300
+          },
+          {
+            "nombre": "ether2-LAN",
+            "descripcion": "Red interna",
+            "estado": "desconocido",
+            "velocidad": "sin gestión",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": "untagged"
+          }
+        ]
+      },
+      "metricas": {
+        "ventana": "últimas 24 h antes de la caída",
+        "utilizacionP95Pct": 38,
+        "picoMbps": 52,
+        "latenciaMsPromedio": 7,
+        "perdidaPct": 0,
+        "jitterMs": 1,
+        "horaPico": "10:00-12:00",
+        "topConsumidores": []
+      },
+      "sla": {
+        "disponibilidadComprometidaPct": 99.9,
+        "tiempoRespuestaMin": 15,
+        "tiempoRestauracionHoras": 4,
+        "creditoPorIncumplimientoPct": 10,
+        "disponibilidadMesActualPct": 99.95,
+        "minutosCaidaActual": 35
+      },
+      "simulacionPortal": {
+        "estadoEnlace": "DOWN: interfaz WAN sin enlace físico",
+        "potenciaOptica": {
+          "rxDbm": "sin_lectura",
+          "estadoOnt": "LOS",
+          "nota": "Luz LOS roja en la ONT"
+        },
+        "pingGateway": {
+          "destino": "203.0.113.1",
+          "enviados": 10,
+          "recibidos": 0,
+          "perdidaPct": 100,
+          "latenciaPromMs": "sin_respuesta"
+        },
+        "pingInternet": {
+          "destino": "8.8.8.8",
+          "enviados": 10,
+          "recibidos": 0,
+          "perdidaPct": 100,
+          "latenciaPromMs": "sin_respuesta"
+        },
+        "traceroute": [
+          "1  * * *",
+          "2  * * *",
+          "3  * * *"
+        ],
+        "interfacesCpe": "ether1-WAN: down (sin enlace) | ether2-LAN: up"
+      }
+    },
+    {
+      "clienteId": "CORP-2002",
+      "enlaceId": "ENL-2002",
+      "servicio": "Internet Dedicado con BGP",
+      "anchoBandaMbps": 500,
+      "estadoEnlace": "up_sin_enrutamiento",
+      "capa2": {
+        "vlanServicio": 305,
+        "vlanConfiguradaCpe": 305,
+        "macAprendidasVlanServicio": 1
+      },
+      "capa3": {
+        "enrutamiento": "bgp",
+        "ipWanIsp": "203.0.113.5/30",
+        "ipWanCliente": "203.0.113.6/30",
+        "prefijoLan": "198.51.100.16/28"
+      },
+      "bgp": {
+        "habilitado": true,
+        "asnIsp": 64500,
+        "asnCliente": 65020,
+        "vecino": "203.0.113.6",
+        "estado": "Active",
+        "prefijosRecibidosDelCliente": 0,
+        "prefijosEnviadosAlCliente": 0,
+        "caidaHaceMin": 75,
+        "ultimoError": "Hold timer expired; los intentos de conexión TCP/179 hacia el vecino son rechazados"
+      },
+      "cpe": {
+        "modelo": "Router de borde del cliente",
+        "administradoPor": "cliente",
+        "ipGestion": "",
+        "alcanzableGestion": false,
+        "ultimoCambioConfigHaceMin": 90,
+        "ultimoCambioDescripcion": "El cliente reportó cambios en su firewall perimetral (nueva ACL en la interfaz WAN)",
+        "interfaces": [
+          {
+            "nombre": "WAN",
+            "descripcion": "Hacia ONT del ISP",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": 305
+          },
+          {
+            "nombre": "LAN",
+            "descripcion": "Red interna",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": "untagged"
+          }
+        ]
+      },
+      "metricas": {
+        "ventana": "última hora",
+        "utilizacionP95Pct": 1,
+        "picoMbps": 2,
+        "latenciaMsPromedio": 2,
+        "perdidaPct": 0,
+        "jitterMs": 0,
+        "horaPico": "09:00-11:00",
+        "topConsumidores": []
+      },
+      "sla": {
+        "disponibilidadComprometidaPct": 99.95,
+        "tiempoRespuestaMin": 15,
+        "tiempoRestauracionHoras": 4,
+        "creditoPorIncumplimientoPct": 15,
+        "disponibilidadMesActualPct": 99.71,
+        "minutosCaidaActual": 75
+      },
+      "simulacionPortal": {
+        "estadoEnlace": "UP: enlace físico y VLAN correctos",
+        "potenciaOptica": {
+          "rxDbm": -17.6,
+          "estadoOnt": "online"
+        },
+        "pingGateway": {
+          "destino": "203.0.113.5",
+          "enviados": 10,
+          "recibidos": 10,
+          "perdidaPct": 0,
+          "latenciaPromMs": 1.8
+        },
+        "pingInternet": {
+          "destino": "8.8.8.8",
+          "enviados": 10,
+          "recibidos": 0,
+          "perdidaPct": 100,
+          "latenciaPromMs": "sin_respuesta",
+          "nota": "connect: Network is unreachable (sin ruta por defecto)"
+        },
+        "traceroute": [
+          "traceroute to 8.8.8.8: connect: Network is unreachable"
+        ],
+        "estadoBgp": "Vecino 203.0.113.5 AS64500: Active, 0 prefijos recibidos, caído hace 75 min",
+        "interfacesCpe": "WAN: up 1 Gbps, VLAN 305 | LAN: up"
+      }
+    },
+    {
+      "clienteId": "CORP-2003",
+      "enlaceId": "ENL-2003",
+      "servicio": "Internet Dedicado con BGP",
+      "anchoBandaMbps": 200,
+      "estadoEnlace": "up",
+      "capa2": {
+        "vlanServicio": 320,
+        "vlanConfiguradaCpe": 320,
+        "macAprendidasVlanServicio": 1
+      },
+      "capa3": {
+        "enrutamiento": "bgp",
+        "ipWanIsp": "203.0.113.9/30",
+        "ipWanCliente": "203.0.113.10/30",
+        "prefijoLan": "198.51.100.32/28"
+      },
+      "bgp": {
+        "habilitado": true,
+        "asnIsp": 64500,
+        "asnCliente": 65030,
+        "vecino": "203.0.113.10",
+        "estado": "Established",
+        "prefijosRecibidosDelCliente": 1,
+        "prefijosEnviadosAlCliente": 1,
+        "caidaHaceMin": 0,
+        "ultimoError": ""
+      },
+      "cpe": {
+        "modelo": "Router de borde del cliente",
+        "administradoPor": "ISP",
+        "ipGestion": "10.20.3.2",
+        "alcanzableGestion": true,
+        "ultimoCambioConfigHaceMin": 86400,
+        "ultimoCambioDescripcion": "Sin cambios recientes",
+        "interfaces": [
+          {
+            "nombre": "ether1-WAN",
+            "descripcion": "Hacia ONT del ISP",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 18452,
+            "vlan": 320
+          },
+          {
+            "nombre": "ether2-LAN",
+            "descripcion": "Red interna",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": "untagged"
+          }
+        ]
+      },
+      "metricas": {
+        "ventana": "últimas 24 h",
+        "utilizacionP95Pct": 97,
+        "picoMbps": 199,
+        "latenciaMsPromedio": 182,
+        "perdidaPct": 3.6,
+        "jitterMs": 45,
+        "horaPico": "08:30-12:00",
+        "topConsumidores": [
+          {
+            "ip": "198.51.100.40",
+            "descripcion": "Servidor de respaldos subiendo a la nube",
+            "pct": 46
+          },
+          {
+            "ip": "198.51.100.35",
+            "descripcion": "Grabación de llamadas hacia la nube",
+            "pct": 21
+          },
+          {
+            "ip": "198.51.100.33",
+            "descripcion": "NAT de estaciones de agentes",
+            "pct": 28
+          }
+        ],
+        "fueraDeHoraPico": {
+          "utilizacionPct": 31,
+          "latenciaMsPromedio": 6,
+          "perdidaPct": 0
+        }
+      },
+      "sla": {
+        "disponibilidadComprometidaPct": 99.9,
+        "tiempoRespuestaMin": 30,
+        "tiempoRestauracionHoras": 6,
+        "creditoPorIncumplimientoPct": 10,
+        "disponibilidadMesActualPct": 100,
+        "minutosCaidaActual": 0
+      },
+      "simulacionPortal": {
+        "estadoEnlace": "UP: enlace saturado en hora pico",
+        "potenciaOptica": {
+          "rxDbm": -19.1,
+          "estadoOnt": "online"
+        },
+        "pingGateway": {
+          "destino": "203.0.113.9",
+          "enviados": 10,
+          "recibidos": 10,
+          "perdidaPct": 0,
+          "latenciaPromMs": 171
+        },
+        "pingInternet": {
+          "destino": "8.8.8.8",
+          "enviados": 50,
+          "recibidos": 48,
+          "perdidaPct": 4,
+          "latenciaPromMs": 182
+        },
+        "traceroute": [
+          "1  203.0.113.9  171 ms",
+          "2  10.255.0.1  175 ms",
+          "3  10.255.0.9  178 ms",
+          "4  8.8.8.8  182 ms"
+        ],
+        "estadoBgp": "Vecino 203.0.113.9 AS64500: Established, 1 prefijo recibido",
+        "interfacesCpe": "ether1-WAN: up 1 Gbps, VLAN 320, 0 errores CRC, 18452 descartes de salida | ether2-LAN: up"
+      }
+    },
+    {
+      "clienteId": "CORP-2004",
+      "enlaceId": "ENL-2004",
+      "servicio": "Internet Dedicado",
+      "anchoBandaMbps": 100,
+      "estadoEnlace": "up_sin_trafico",
+      "capa2": {
+        "vlanServicio": 310,
+        "vlanConfiguradaCpe": "ninguna (untagged)",
+        "macAprendidasVlanServicio": 0
+      },
+      "capa3": {
+        "enrutamiento": "estatico",
+        "ipWanIsp": "203.0.113.13/30",
+        "ipWanCliente": "203.0.113.14/30",
+        "prefijoLan": "198.51.100.48/29"
+      },
+      "bgp": {
+        "habilitado": false
+      },
+      "cpe": {
+        "modelo": "Router nuevo del cliente",
+        "administradoPor": "cliente",
+        "ipGestion": "",
+        "alcanzableGestion": false,
+        "ultimoCambioConfigHaceMin": 70,
+        "ultimoCambioDescripcion": "El cliente reemplazó su router por un equipo nuevo",
+        "interfaces": [
+          {
+            "nombre": "WAN",
+            "descripcion": "Hacia ONT del ISP",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": "untagged"
+          },
+          {
+            "nombre": "LAN",
+            "descripcion": "Red interna",
+            "estado": "up",
+            "velocidad": "1 Gbps",
+            "erroresCrc": 0,
+            "descartesSalida": 0,
+            "vlan": "untagged"
+          }
+        ]
+      },
+      "metricas": {
+        "ventana": "última hora",
+        "utilizacionP95Pct": 0,
+        "picoMbps": 0,
+        "latenciaMsPromedio": "sin_respuesta",
+        "perdidaPct": 100,
+        "jitterMs": 0,
+        "horaPico": "08:00-17:00",
+        "topConsumidores": []
+      },
+      "sla": {
+        "disponibilidadComprometidaPct": 99.5,
+        "tiempoRespuestaMin": 30,
+        "tiempoRestauracionHoras": 8,
+        "creditoPorIncumplimientoPct": 5,
+        "disponibilidadMesActualPct": 99.84,
+        "minutosCaidaActual": 70
+      },
+      "simulacionPortal": {
+        "estadoEnlace": "UP: enlace físico arriba, sin tráfico en la VLAN de servicio",
+        "potenciaOptica": {
+          "rxDbm": -20.2,
+          "estadoOnt": "online"
+        },
+        "pingGateway": {
+          "destino": "203.0.113.13",
+          "enviados": 10,
+          "recibidos": 0,
+          "perdidaPct": 100,
+          "latenciaPromMs": "sin_respuesta",
+          "nota": "Destination host unreachable (ARP incompleto)"
+        },
+        "pingInternet": {
+          "destino": "8.8.8.8",
+          "enviados": 10,
+          "recibidos": 0,
+          "perdidaPct": 100,
+          "latenciaPromMs": "sin_respuesta"
+        },
+        "traceroute": [
+          "1  * * *",
+          "2  * * *"
+        ],
+        "interfacesCpe": "WAN: up 1 Gbps, sin VLAN (untagged) | LAN: up"
+      }
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+/**
+ * CAPA 0 - Validador de datos ficticios
+ * Ejecutar desde la raíz del repo:  boxlang tests/validar_datos.bxs
+ *
+ * Revisa que:
+ *  1) Todos los JSON se pueden leer.
+ *  2) Cada cliente del CRM existe en OSS, BSS, NOC (PON) y en ACS (residencial) o enlaces (corporativo).
+ *  3) Facturas y documentos (DUI/NIT) no se repiten.
+ *  4) Con reglas fijas (sin IA), cada cliente lleva a UNA sola falla y coincide con tests/casos_esperados.json.
+ */
+
+dataDir  = expandPath( "../data/" )
+testsDir = expandPath( "./" )
+errores  = []
+
+function leer( required string ruta ) {
+	if ( !fileExists( ruta ) ) {
+		throw( message = "No existe el archivo: " & ruta )
+	}
+	var texto = fileRead( ruta )
+	if ( !isJSON( texto ) ) {
+		throw( message = "JSON inválido: " & ruta )
+	}
+	return jsonDeserialize( texto )
+}
+
+function indexar( required array lista ) {
+	var mapa = {}
+	for ( var item in lista ) {
+		mapa[ item.clienteId ] = item
+	}
+	return mapa
+}
+
+catalogo   = leer( dataDir & "catalogo_fallas.json" )
+crm        = leer( dataDir & "crm_clientes.json" )
+oss        = indexar( leer( dataDir & "oss_ont.json" ) )
+noc        = leer( dataDir & "noc_incidentes.json" )
+bss        = indexar( leer( dataDir & "bss_facturacion.json" ).cuentas )
+acs        = indexar( leer( dataDir & "acs_wifi.json" ).equipos )
+corp       = indexar( leer( dataDir & "corp_enlaces.json" ).enlaces )
+tickets    = leer( dataDir & "tickets.json" )
+esperados  = indexar( leer( testsDir & "casos_esperados.json" ) )
+
+pons = {}
+for ( p in noc.pons ) {
+	pons[ p.pon ] = p
+}
+
+println( "JSON leídos: OK" )
+println( "Fallas en catálogo: " & catalogo.fallas.len() & " | Clientes: " & crm.len() & " | Tickets: " & tickets.len() )
+
+// ---------- 2 y 3: consistencia entre sistemas ----------
+facturas   = {}
+documentos = {}
+for ( c in crm ) {
+	id  = c.clienteId
+	res = ( c.tipo == "residencial" )
+
+	if ( !oss.keyExists( id ) ) errores.append( id & " no está en oss_ont.json" )
+	if ( !bss.keyExists( id ) ) errores.append( id & " no está en bss_facturacion.json" )
+	if ( res && !acs.keyExists( id ) ) errores.append( id & " no está en acs_wifi.json" )
+	if ( !res && !corp.keyExists( id ) ) errores.append( id & " no está en corp_enlaces.json" )
+	if ( !pons.keyExists( c.pon ) ) errores.append( id & " tiene un PON sin resumen en noc_incidentes.json" )
+	if ( oss.keyExists( id ) && ( oss[ id ].pon != c.pon || oss[ id ].ontSerial != c.ontSerial ) ) {
+		errores.append( id & " tiene PON o serial distinto entre CRM y OSS" )
+	}
+
+	doc = c.keyExists( "dui" ) ? c.dui : c.nit
+	if ( documentos.keyExists( doc ) ) errores.append( "Documento repetido: " & doc )
+	documentos[ doc ] = id
+
+	if ( bss.keyExists( id ) ) {
+		for ( f in bss[ id ].facturas ) {
+			if ( facturas.keyExists( f.numero ) ) errores.append( "Factura repetida: " & f.numero )
+			facturas[ f.numero ] = id
+		}
+	}
+}
+
+// ---------- 4: reglas fijas de diagnóstico (mismo orden que el triage) ----------
+function diagnosticar( required struct c ) {
+	var id      = c.clienteId
+	var res     = ( c.tipo == "residencial" )
+	var o       = oss[ id ]
+	var b       = bss[ id ]
+	var pon     = pons[ c.pon ]
+	var activos = noc.incidentes.filter( ( i ) => i.pon == c.pon && i.estado == "activo" )
+	var m       = []
+
+	// Facturación
+	if ( b.estado == "suspendido" ) m.append( res ? "R05" : "C07" )
+
+	// Masiva o mantenimiento
+	if ( activos.some( ( i ) => i.tipo == "masiva" ) ) m.append( res ? "R01" : "C01-masiva" )
+	if ( activos.some( ( i ) => i.tipo == "mantenimiento" ) ) m.append( "R11" )
+
+	// ONT en LOS sin incidente
+	if ( o.estado == "los" && activos.len() == 0 ) {
+		if ( pon.los >= 4 ) {
+			m.append( res ? "R01" : "C01" )
+		} else {
+			m.append( res ? "R04" : "C01" )
+		}
+	}
+
+	// Energía
+	if ( o.estado == "offline" && o.ultimoEvento == "DYING_GASP" ) {
+		if ( res ) {
+			m.append( pon.offline >= 4 ? "R10" : "R02" )
+		} else {
+			m.append( "C06" )
+		}
+	}
+
+	// Óptica, hardware y WAN
+	if ( o.estado == "online" ) {
+		if ( ( isNumeric( o.rxDbm ) && o.rxDbm < -25 ) || o.flaps24h >= 3 ) m.append( res ? "R03" : "C05" )
+		if ( isNumeric( o.txDbm ) && ( o.txDbm < 0.5 || o.txDbm > 5 ) ) m.append( "R09" )
+		if ( res && o.wan.estado == "down" ) m.append( "R08" )
+	}
+
+	// WiFi (solo residencial con servicio normal)
+	if ( res ) {
+		var a = acs[ id ]
+		if ( a.alcanzable && o.estado == "online" && o.wan.estado == "up" && b.estado != "suspendido" ) {
+			if ( a.banda24.utilizacionPct >= 70 ) m.append( "R06" )
+			if ( a.dispositivos.some( ( d ) => d.rssiDbm <= -75 ) ) m.append( "R07" )
+		}
+	} else {
+		// Enlace corporativo
+		var e = corp[ id ]
+		if ( o.estado == "online" ) {
+			if ( toString( e.capa2.vlanConfiguradaCpe ) != toString( e.capa2.vlanServicio ) ) m.append( "C03" )
+			if ( e.bgp.habilitado && e.bgp.estado != "Established" ) m.append( "C02" )
+			if ( e.metricas.utilizacionP95Pct >= 90 ) m.append( "C04" )
+		}
+	}
+	return m
+}
+
+println( "" )
+println( "Cliente     | Reglas          | Esperado | Resultado" )
+println( "------------+-----------------+----------+----------" )
+for ( c in crm ) {
+	id       = c.clienteId
+	encontr  = diagnosticar( c )
+	esperado = esperados.keyExists( id ) ? esperados[ id ].falla : "SIN_CASO"
+	ok       = ( encontr.len() == 1 && encontr[ 1 ] == esperado )
+	if ( !ok ) errores.append( id & ": reglas=" & encontr.toList() & " esperado=" & esperado )
+	println( id & "   | " & encontr.toList() & "             | " & esperado & "      | " & ( ok ? "OK" : "FALLA" ) )
+}
+
+println( "" )
+if ( errores.len() == 0 ) {
+	println( "CAPA 0 LISTA: datos válidos y cada cliente lleva a una sola falla." )
+} else {
+	println( "ERRORES (" & errores.len() & "):" )
+	for ( e in errores ) {
+		println( " - " & e )
+	}
+}

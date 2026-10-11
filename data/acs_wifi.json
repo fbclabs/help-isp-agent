@@ -1,0 +1,396 @@
+{
+  "nota": "Datos del ACS (TR-069). Solo clientes residenciales; la ONT corporativa está en modo bridge y no administra WiFi.",
+  "equipos": [
+    {
+      "clienteId": "CLI-1001",
+      "alcanzable": false,
+      "ultimaLecturaHaceMin": 125,
+      "pruebaVelocidadOnt": {
+        "disponible": false,
+        "motivo": "ONT sin enlace óptico"
+      },
+      "banda24": {
+        "ssid": "Rivas_Casa",
+        "habilitada": true,
+        "canal": 11,
+        "anchoMhz": 20,
+        "utilizacionPct": 28,
+        "dispositivos": 6,
+        "redesVecinas": 8,
+        "redesVecinasMismoCanal": 2
+      },
+      "banda5": {
+        "ssid": "Rivas_Casa_5G",
+        "habilitada": true,
+        "canal": 44,
+        "anchoMhz": 80,
+        "utilizacionPct": 15,
+        "dispositivos": 5,
+        "redesVecinas": 4,
+        "redesVecinasMismoCanal": 0
+      },
+      "dispositivos": [
+        {
+          "nombre": "Celular-Maria",
+          "banda": "5GHz",
+          "rssiDbm": -52
+        },
+        {
+          "nombre": "Laptop-Trabajo",
+          "banda": "5GHz",
+          "rssiDbm": -58
+        },
+        {
+          "nombre": "TV-Sala",
+          "banda": "2.4GHz",
+          "rssiDbm": -55
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1002",
+      "alcanzable": false,
+      "ultimaLecturaHaceMin": 42,
+      "pruebaVelocidadOnt": {
+        "disponible": false,
+        "motivo": "ONT sin energía"
+      },
+      "banda24": {
+        "ssid": "Hernandez_WiFi",
+        "habilitada": true,
+        "canal": 1,
+        "anchoMhz": 20,
+        "utilizacionPct": 31,
+        "dispositivos": 7,
+        "redesVecinas": 9,
+        "redesVecinasMismoCanal": 2
+      },
+      "banda5": {
+        "ssid": "Hernandez_WiFi_5G",
+        "habilitada": true,
+        "canal": 36,
+        "anchoMhz": 80,
+        "utilizacionPct": 12,
+        "dispositivos": 3,
+        "redesVecinas": 3,
+        "redesVecinasMismoCanal": 0
+      },
+      "dispositivos": [
+        {
+          "nombre": "Celular-Jose",
+          "banda": "5GHz",
+          "rssiDbm": -50
+        },
+        {
+          "nombre": "TV-Cuarto",
+          "banda": "2.4GHz",
+          "rssiDbm": -61
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1003",
+      "alcanzable": true,
+      "ultimaLecturaHaceMin": 3,
+      "pruebaVelocidadOnt": {
+        "disponible": true,
+        "bajadaMbps": 281,
+        "subidaMbps": 139,
+        "haceMin": 20,
+        "nota": "Medida entre cortes"
+      },
+      "banda24": {
+        "ssid": "AnaLucia_Home",
+        "habilitada": true,
+        "canal": 6,
+        "anchoMhz": 20,
+        "utilizacionPct": 34,
+        "dispositivos": 5,
+        "redesVecinas": 10,
+        "redesVecinasMismoCanal": 3
+      },
+      "banda5": {
+        "ssid": "AnaLucia_Home_5G",
+        "habilitada": true,
+        "canal": 149,
+        "anchoMhz": 80,
+        "utilizacionPct": 18,
+        "dispositivos": 4,
+        "redesVecinas": 5,
+        "redesVecinasMismoCanal": 1
+      },
+      "dispositivos": [
+        {
+          "nombre": "Laptop-Ana",
+          "banda": "5GHz",
+          "rssiDbm": -49
+        },
+        {
+          "nombre": "Celular-Ana",
+          "banda": "5GHz",
+          "rssiDbm": -55
+        },
+        {
+          "nombre": "Impresora",
+          "banda": "2.4GHz",
+          "rssiDbm": -60
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1004",
+      "alcanzable": true,
+      "ultimaLecturaHaceMin": 2,
+      "pruebaVelocidadOnt": {
+        "disponible": true,
+        "bajadaMbps": 296,
+        "subidaMbps": 148,
+        "haceMin": 15
+      },
+      "banda24": {
+        "ssid": "Familia_Martinez",
+        "habilitada": true,
+        "canal": 6,
+        "anchoMhz": 40,
+        "utilizacionPct": 88,
+        "dispositivos": 19,
+        "redesVecinas": 23,
+        "redesVecinasMismoCanal": 11
+      },
+      "banda5": {
+        "ssid": "Familia_Martinez_5G",
+        "habilitada": true,
+        "canal": 36,
+        "anchoMhz": 80,
+        "utilizacionPct": 9,
+        "dispositivos": 2,
+        "redesVecinas": 6,
+        "redesVecinasMismoCanal": 1
+      },
+      "dispositivos": [
+        {
+          "nombre": "Celular-Carlos",
+          "banda": "2.4GHz",
+          "rssiDbm": -58
+        },
+        {
+          "nombre": "Celular-Esposa",
+          "banda": "2.4GHz",
+          "rssiDbm": -61
+        },
+        {
+          "nombre": "Tablet-Ninos",
+          "banda": "2.4GHz",
+          "rssiDbm": -63
+        },
+        {
+          "nombre": "Smart-TV",
+          "banda": "2.4GHz",
+          "rssiDbm": -52
+        },
+        {
+          "nombre": "Camara-Patio-1",
+          "banda": "2.4GHz",
+          "rssiDbm": -66
+        },
+        {
+          "nombre": "Camara-Patio-2",
+          "banda": "2.4GHz",
+          "rssiDbm": -68
+        },
+        {
+          "nombre": "Laptop-Carlos",
+          "banda": "5GHz",
+          "rssiDbm": -50
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1005",
+      "alcanzable": true,
+      "ultimaLecturaHaceMin": 4,
+      "pruebaVelocidadOnt": {
+        "disponible": false,
+        "motivo": "Perfil de suspensión: solo portal de pago"
+      },
+      "banda24": {
+        "ssid": "Lopez_Casa",
+        "habilitada": true,
+        "canal": 1,
+        "anchoMhz": 20,
+        "utilizacionPct": 25,
+        "dispositivos": 5,
+        "redesVecinas": 7,
+        "redesVecinasMismoCanal": 2
+      },
+      "banda5": {
+        "ssid": "Lopez_Casa_5G",
+        "habilitada": true,
+        "canal": 44,
+        "anchoMhz": 80,
+        "utilizacionPct": 10,
+        "dispositivos": 2,
+        "redesVecinas": 2,
+        "redesVecinasMismoCanal": 0
+      },
+      "dispositivos": [
+        {
+          "nombre": "Celular-Rosa",
+          "banda": "5GHz",
+          "rssiDbm": -54
+        },
+        {
+          "nombre": "TV-Sala",
+          "banda": "2.4GHz",
+          "rssiDbm": -57
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1006",
+      "alcanzable": false,
+      "ultimaLecturaHaceMin": 185,
+      "pruebaVelocidadOnt": {
+        "disponible": false,
+        "motivo": "ONT sin enlace óptico"
+      },
+      "banda24": {
+        "ssid": "Flores_Net",
+        "habilitada": true,
+        "canal": 11,
+        "anchoMhz": 20,
+        "utilizacionPct": 30,
+        "dispositivos": 6,
+        "redesVecinas": 8,
+        "redesVecinasMismoCanal": 1
+      },
+      "banda5": {
+        "ssid": "Flores_Net_5G",
+        "habilitada": true,
+        "canal": 149,
+        "anchoMhz": 80,
+        "utilizacionPct": 14,
+        "dispositivos": 4,
+        "redesVecinas": 3,
+        "redesVecinasMismoCanal": 0
+      },
+      "dispositivos": [
+        {
+          "nombre": "Celular-Luis",
+          "banda": "5GHz",
+          "rssiDbm": -51
+        },
+        {
+          "nombre": "PC-Estudio",
+          "banda": "5GHz",
+          "rssiDbm": -57
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1007",
+      "alcanzable": true,
+      "ultimaLecturaHaceMin": 5,
+      "pruebaVelocidadOnt": {
+        "disponible": false,
+        "motivo": "WAN sin sesión PPPoE"
+      },
+      "banda24": {
+        "ssid": "Ramirez_Fibra",
+        "habilitada": true,
+        "canal": 1,
+        "anchoMhz": 20,
+        "utilizacionPct": 22,
+        "dispositivos": 4,
+        "redesVecinas": 9,
+        "redesVecinasMismoCanal": 2
+      },
+      "banda5": {
+        "ssid": "Ramirez_Fibra_5G",
+        "habilitada": true,
+        "canal": 36,
+        "anchoMhz": 80,
+        "utilizacionPct": 8,
+        "dispositivos": 6,
+        "redesVecinas": 4,
+        "redesVecinasMismoCanal": 0
+      },
+      "dispositivos": [
+        {
+          "nombre": "Laptop-Karla",
+          "banda": "5GHz",
+          "rssiDbm": -47
+        },
+        {
+          "nombre": "Celular-Karla",
+          "banda": "5GHz",
+          "rssiDbm": -52
+        },
+        {
+          "nombre": "Consola",
+          "banda": "5GHz",
+          "rssiDbm": -56
+        }
+      ]
+    },
+    {
+      "clienteId": "CLI-1008",
+      "alcanzable": true,
+      "ultimaLecturaHaceMin": 2,
+      "pruebaVelocidadOnt": {
+        "disponible": true,
+        "bajadaMbps": 497,
+        "subidaMbps": 248,
+        "haceMin": 10
+      },
+      "banda24": {
+        "ssid": "Perez_Casa",
+        "habilitada": true,
+        "canal": 1,
+        "anchoMhz": 20,
+        "utilizacionPct": 22,
+        "dispositivos": 4,
+        "redesVecinas": 6,
+        "redesVecinasMismoCanal": 1
+      },
+      "banda5": {
+        "ssid": "Perez_Casa_5G",
+        "habilitada": true,
+        "canal": 149,
+        "anchoMhz": 80,
+        "utilizacionPct": 18,
+        "dispositivos": 5,
+        "redesVecinas": 3,
+        "redesVecinasMismoCanal": 0
+      },
+      "ubicacionRouter": "Sala, primer piso, dentro de mueble de TV (reportado en instalación)",
+      "dispositivos": [
+        {
+          "nombre": "TV-Sala",
+          "banda": "5GHz",
+          "rssiDbm": -44
+        },
+        {
+          "nombre": "Celular-Daniel",
+          "banda": "5GHz",
+          "rssiDbm": -53
+        },
+        {
+          "nombre": "Laptop-Cuarto2-Piso2",
+          "banda": "5GHz",
+          "rssiDbm": -82
+        },
+        {
+          "nombre": "Celular-Hija-Piso2",
+          "banda": "2.4GHz",
+          "rssiDbm": -79
+        },
+        {
+          "nombre": "Tablet-Piso2",
+          "banda": "2.4GHz",
+          "rssiDbm": -77
+        }
+      ]
+    }
+  ]
+}
