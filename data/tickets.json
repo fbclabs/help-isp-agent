@@ -1,1 +1,40 @@
-[]
+[ {
+  "escaladoA" : "",
+  "estado" : "cerrado",
+  "accionesEjecutadas" : [ {
+    "accion" : "reiniciar_ont",
+    "resultado" : "ONT reiniciada. WAN: up",
+    "fecha" : "2026-10-11 10:15",
+    "decisionHumana" : "approve"
+  }, {
+    "accion" : "cerrar_ticket",
+    "resultado" : "Cerrado",
+    "fecha" : "2026-10-11 10:16",
+    "decisionHumana" : "approve"
+  } ],
+  "fallaId" : "R08",
+  "resumen" : "",
+  "prioridad" : "P2",
+  "actualizado" : "2026-10-11 10:16",
+  "notaCierre" : "Cliente confirmó que el servicio funciona tras reinicio remoto aprobado de la ONT. WAN quedó en up con IP asignada (100.64.33.71).",
+  "clienteId" : "CLI-1007",
+  "siguientePaso" : "",
+  "cerrado" : "2026-10-11 10:16",
+  "tipoCliente" : "residencial",
+  "ticketId" : "TKT-000001",
+  "area" : "Soporte",
+  "requiereVisita" : false,
+  "visita" : { },
+  "creado" : "2026-10-11 10:15",
+  "diagnostico" : "ONT Huawei HG8145X6 online, Rx -20.4 dBm (normal), OLT Rx -23.1 dBm. WAN PPPoE down sin IP, perfil RES_500M, último error PPPOE_TIMEOUT hace 50 min + 2 reintentos fallidos. Facturación al día, sin incidentes en PON OLT-SSA-02:0/3/1. Prueba casera (apagado 30s) sin éxito.",
+  "historial" : [ {
+    "nota" : "Ticket creado vía cli",
+    "autor" : "agente",
+    "fecha" : "2026-10-11 10:15"
+  }, {
+    "nota" : "Cerrado: Cliente confirmó que el servicio funciona tras reinicio remoto aprobado de la ONT. WAN quedó en up con IP asignada (100.64.33.71).",
+    "autor" : "agente",
+    "fecha" : "2026-10-11 10:16"
+  } ],
+  "sintoma" : "WiFi sin internet, luz PON verde e Internet apagada"
+} ]

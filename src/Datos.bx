@@ -245,6 +245,13 @@ class {
 		return resultados.len() > 3 ? resultados.slice( 1, 3 ) : resultados
 	}
 
+	struct function falla( required string fallaId ) {
+		for ( var f in variables.catalogo.fallas ) {
+			if ( uCase( f.id ) == uCase( trim( fallaId ) ) ) return f
+		}
+		return {}
+	}
+
 	struct function umbrales() {
 		return variables.catalogo.umbrales
 	}

@@ -220,9 +220,13 @@ class {
 		var err = validarCliente( clienteId )
 		if ( !isSimpleValue( err ) ) return err
 
-		if ( !variables.datos.areas().containsNoCase( area ) ) {
-			return { error: "Área inválida. Usa: " & variables.datos.areas().toList( ", " ) }
+		// La falla debe existir en el catálogo; área y prioridad se toman del catálogo
+		var falla = variables.datos.falla( fallaId )
+		if ( falla.isEmpty() ) {
+			return { error: "fallaId #fallaId# no existe en el catálogo. Usa buscar_kb y el id que devuelva." }
 		}
+		area      = falla.areaResponsable
+		prioridad = falla.prioridad
 
 		// Guardas de negocio en código
 		var cta = variables.datos.cuenta( variables.clienteActual )
