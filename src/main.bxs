@@ -8,11 +8,12 @@ fabrica = new Agente( datos, "cli" )
 agente  = fabrica.crear()
 
 println( "==========================================================" )
-println( " HELP! Agente de soporte FTTH  |  BoxLang AI + Gemini" )
+println( " HELP! Agente de soporte FTTH  |  BoxLang AI + " & datos.proveedor() )
 println( " HITL: " & datos.cfg( "HITL_MODO", "middleware" ) & "  |  Comandos: /nuevo  /tickets  salir" )
 println( "==========================================================" )
-if ( !len( datos.cfg( "GEMINI_API_KEY" ) ) ) {
-	println( "[ERROR] No se encontró GEMINI_API_KEY. Revisa el archivo .env en la raíz y ejecuta desde la raíz." )
+claveNecesaria = uCase( datos.proveedor() ) & "_API_KEY"
+if ( !len( datos.cfg( claveNecesaria ) ) ) {
+	println( "[ERROR] No se encontró " & claveNecesaria & " en .env (ejecuta desde la raíz del repo)." )
 }
 
 while ( true ) {
@@ -38,7 +39,7 @@ while ( true ) {
 		println( "Fibra> " & respuesta )
 	} catch ( any e ) {
 		println( "[ERROR] " & e.message )
-		println( "Si es 429 (cuota): espera 1 minuto o usa GEMINI_MODEL=gemini-2.5-flash-lite en .env" )
+		println( "Si es 429/402 (cuota o saldo): revisa la cuenta del proveedor o cambia LLM_PROVIDER en .env" )
 	}
 }
 println( "Fin de la sesión." )

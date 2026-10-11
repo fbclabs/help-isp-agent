@@ -134,6 +134,10 @@ class {
 		if ( !len( variables.clienteActual ) ) {
 			return { error: "Primero identifica al cliente con identificar_cliente (DUI, NIT o factura)." }
 		}
+		// Si la IA manda un id que no existe (error de transcripción), se usa el cliente identificado
+		if ( variables.datos.cliente( uCase( trim( clienteId ) ) ).isEmpty() ) {
+			return "";
+		}
 		if ( uCase( trim( clienteId ) ) != variables.clienteActual ) {
 			return { error: "Solo puedes consultar datos del cliente identificado en esta conversación (#variables.clienteActual#). No compartas datos de otros clientes." }
 		}
@@ -318,9 +322,9 @@ class {
 	}
 
 	private void function registrarAccion( required string ticketId, required string accion, required string decision, required string resultado ) {
-		if ( !len( ticketId ) ) return
+		if ( !len( ticketId ) ) return;
 		var t = variables.datos.ticket( ticketId )
-		if ( t.isEmpty() ) return
+		if ( t.isEmpty() ) return;
 		t.accionesEjecutadas.append( { accion: accion, decisionHumana: decision, resultado: resultado, fecha: variables.datos.ahora() } )
 		t.actualizado = variables.datos.ahora()
 		variables.datos.guardarTicket( t )

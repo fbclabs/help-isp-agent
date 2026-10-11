@@ -16,10 +16,18 @@ if ( fileExists( rutaEnv ) ) {
 		env[ trim( listFirst( linea, "=" ) ) ] = trim( listRest( linea, "=" ) )
 	}
 }
-apiKey = env.keyExists( "GEMINI_API_KEY" ) ? env.GEMINI_API_KEY : getSystemSetting( "GEMINI_API_KEY", "" )
-modelo = env.keyExists( "GEMINI_MODEL" ) ? env.GEMINI_MODEL : "gemini-2.5-flash"
+proveedor = lCase( env.keyExists( "LLM_PROVIDER" ) ? env.LLM_PROVIDER : "deepseek" )
+if ( proveedor == "gemini" ) {
+	apiKey = env.keyExists( "GEMINI_API_KEY" ) ? env.GEMINI_API_KEY : ""
+	modelo = env.keyExists( "GEMINI_MODEL" ) ? env.GEMINI_MODEL : "gemini-3.8-flash"
+	llm    = aiModel( provider: "openai-compatible", apiKey: apiKey, options: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" }, params: { model: modelo } )
+} else {
+	apiKey = env.keyExists( "DEEPSEEK_API_KEY" ) ? env.DEEPSEEK_API_KEY : ""
+	modelo = env.keyExists( "DEEPSEEK_MODEL" ) ? env.DEEPSEEK_MODEL : "deepseek-chat"
+	llm    = aiModel( provider: "deepseek", apiKey: apiKey, params: { model: modelo } )
+}
 
-println( ".env encontrado: " & ( fileExists( rutaEnv ) ? "SI" : "NO" ) & " | GEMINI_API_KEY cargada: " & ( len( apiKey ) > 10 ? "SI" : "NO" ) & " | Modelo: " & modelo )
+println( ".env encontrado: " & ( fileExists( rutaEnv ) ? "SI" : "NO" ) & " | Proveedor: " & proveedor & " | API key cargada: " & ( len( apiKey ) > 10 ? "SI" : "NO" ) & " | Modelo: " & modelo )
 
 pingTool = aiTool(
 	"estado_ont",
@@ -45,7 +53,7 @@ geminiMw = {
 	afterLLMCall: ( required struct context ) => {
 		// Si Gemini devuelve un error, mostrarlo completo
 		if ( context.keyExists( "result" ) && isArray( context.result ) ) {
-			println( "[GEMINI ERROR] " & jsonSerialize( context.result ) );
+			println( "[LLM ERROR] " & jsonSerialize( context.result ) );
 		}
 		return AiMiddlewareResult.continue();
 	}
@@ -54,12 +62,7 @@ geminiMw = {
 agent = aiAgent(
 	name        : "SmokeTest",
 	instructions: "Responde en español. Usa la tool estado_ont para consultar el estado de un cliente. No inventes datos.",
-	model       : aiModel(
-		provider: "openai-compatible",
-		apiKey  : apiKey,
-		options : { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" },
-		params  : { model: modelo }
-	),
+	model       : llm,
 	tools       : [ pingTool ],
 	middleware  : [ geminiMw ]
 )

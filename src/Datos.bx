@@ -60,21 +60,41 @@ class {
 			afterLLMCall: ( required struct context ) => {
 				// Si Gemini devuelve un error, mostrarlo completo
 				if ( context.keyExists( "result" ) && isArray( context.result ) ) {
-					println( "[GEMINI ERROR] " & jsonSerialize( context.result ) );
+					println( "[LLM ERROR] " & jsonSerialize( context.result ) );
 				}
 				return AiMiddlewareResult.continue();
 			}
 		}
 	}
 
-	/** Modelo Gemini vía su endpoint compatible con OpenAI (el proveedor "gemini" de bx-ai 3.5 no envía bien las tools). */
+	/** Modelo según LLM_PROVIDER en .env: claude | deepseek | gemini */
 	function modelo() {
+		var proveedor = lCase( cfg( "LLM_PROVIDER", "deepseek" ) )
+		if ( proveedor == "claude" ) {
+			return aiModel(
+				provider: "claude",
+				apiKey  : cfg( "CLAUDE_API_KEY" ),
+				params  : { model: cfg( "CLAUDE_MODEL", "claude-sonnet-5-5" ), max_tokens: 2048 }
+			)
+		}
+		if ( proveedor == "gemini" ) {
+			// Endpoint de Gemini compatible con OpenAI (el proveedor "gemini" de bx-ai 3.5 no envía bien las tools)
+			return aiModel(
+				provider: "openai-compatible",
+				apiKey  : cfg( "GEMINI_API_KEY" ),
+				options : { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" },
+				params  : { model: cfg( "GEMINI_MODEL", "gemini-3.8-flash" ) }
+			)
+		}
 		return aiModel(
-			provider: "openai-compatible",
-			apiKey  : cfg( "GEMINI_API_KEY" ),
-			options : { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai" },
-			params  : { model: cfg( "GEMINI_MODEL", "gemini-2.5-flash" ) }
+			provider: "deepseek",
+			apiKey  : cfg( "DEEPSEEK_API_KEY" ),
+			params  : { model: cfg( "DEEPSEEK_MODEL", "deepseek-chat" ) }
 		)
+	}
+
+	string function proveedor() {
+		return lCase( cfg( "LLM_PROVIDER", "deepseek" ) )
 	}
 
 	// ---------- utilidades ----------
